@@ -1,0 +1,156 @@
+/* Ortak bileşenler — birincil renk = "Talebi oluştur" gradient’i */
+
+.mau-page {
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+.mau-page--narrow {
+  max-width: 40rem;
+}
+
+.mau-card {
+  background: var(--mau-card);
+  border-radius: var(--mau-radius-md);
+  border: 1px solid var(--mau-border-subtle);
+  box-shadow: var(--mau-shadow-card);
+}
+
+.mau-card__header {
+  padding: 1.25rem 1.5rem 0;
+}
+
+.mau-card__title {
+  margin: 0;
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--mau-text);
+}
+
+.mau-card__subtitle {
+  margin: 0.35rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--mau-text-muted);
+}
+
+.mau-card__accent {
+  height: 3px;
+  width: 3rem;
+  border-radius: 999px;
+  margin-top: 1rem;
+  background: var(--mau-gradient-primary);
+}
+
+.mau-card__body {
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.mau-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  border-radius: var(--mau-radius-sm);
+  padding: 0.625rem 1.125rem;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+  border: 1px solid transparent;
+}
+
+.mau-btn:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.mau-btn--primary {
+  background: var(--mau-gradient-primary);
+  color: #fff;
+  box-shadow: var(--mau-shadow-brand);
+}
+
+.mau-btn--primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--mau-shadow-brand-hover);
+}
+
+.mau-btn--primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.mau-btn--ghost {
+  background: var(--mau-card);
+  color: var(--mau-text);
+  border-color: var(--mau-border);
+}
+
+.mau-btn--ghost:hover:not(:disabled) {
+  border-color: var(--mau-magenta-light);
+  color: var(--mau-magenta);
+  background: rgba(var(--mau-magenta-rgb), 0.04);
+}
+
+.mau-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.mau-field > span:first-child {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--mau-text-secondary);
+}
+
+.mau-input,
+.mau-field select,
+.mau-field textarea {
+  font-family: inherit;
+  font-size: 0.9375rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--mau-radius-sm);
+  border: 1px solid var(--mau-border);
+  background: var(--mau-card);
+  color: var(--mau-text);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.mau-field textarea {
+  resize: vertical;
+  min-height: 8.5rem;
+  line-height: 1.5;
+}
+
+.mau-input:focus,
+.mau-field select:focus,
+.mau-field textarea:focus {
+  outline: none;
+  border-color: var(--mau-magenta);
+  box-shadow: var(--mau-focus-ring);
+}
+
+.mau-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--mau-card);
+  border-radius: var(--mau-radius-md);
+  border: 1px solid var(--mau-border-subtle);
+  box-shadow: var(--mau-shadow-soft);
+  margin-bottom: 1.5rem;
+}

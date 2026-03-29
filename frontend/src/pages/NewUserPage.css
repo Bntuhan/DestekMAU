@@ -1,0 +1,172 @@
+.nu-page {
+  padding: 3rem 2rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.nu-header {
+  margin-bottom: 2rem;
+}
+
+.nu-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--c-text);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.nu-subtitle {
+  color: var(--c-text-muted);
+  font-size: 1.125rem;
+}
+
+.nu-card {
+  background: var(--c-bg-card);
+  border: 1px solid var(--c-border);
+  border-radius: 16px;
+  padding: 2.5rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.nu-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.nu-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.nu-form-group label {
+  font-weight: 500;
+  color: var(--c-text);
+  font-size: 0.95rem;
+}
+
+.nu-form-group input {
+  padding: 0.875rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--c-border);
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-size: 1rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.nu-form-group input:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-alpha);
+  background: var(--c-bg-card);
+}
+
+.nu-select-wrap {
+  position: relative;
+}
+
+.nu-select-wrap select {
+  width: 100%;
+  appearance: none;
+  padding: 0.875rem 1rem;
+  padding-right: 3rem;
+  border-radius: 12px;
+  border: 1px solid var(--c-border);
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-size: 1rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nu-select-wrap select:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-alpha);
+}
+
+.nu-select-wrap::after {
+  content: "↓";
+  position: absolute;
+  right: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--c-text-muted);
+  font-size: 0.9rem;
+}
+
+.nu-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.nu-btn-primary, .nu-btn-secondary {
+  padding: 0.875rem 1.75rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.nu-btn-primary {
+  background: var(--brand);
+  color: #fff;
+}
+
+.nu-btn-primary:hover:not(:disabled) {
+  background: var(--brand-hover);
+  transform: translateY(-1px);
+}
+
+.nu-btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.nu-btn-secondary {
+  background: var(--c-bg);
+  color: var(--c-text);
+  border: 1px solid var(--c-border);
+}
+
+.nu-btn-secondary:hover:not(:disabled) {
+  background: var(--c-hover);
+}
+
+.nu-alert {
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+}
+
+.nu-alert.success {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.nu-alert.error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.fade-in {
+  animation: fadeIn 0.4s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Birincil aksan: Blackboard LMS stilinde koyu pembe/mürdüm */
+  --mau-magenta: #c50e82; /* Image 1 active color */
+  --mau-magenta-mid: #a00b6a;
+  --mau-magenta-light: #e032a2;
+  --mau-magenta-rgb: 197, 14, 130;
+  --mau-gradient-primary: var(--mau-magenta);
+  --mau-magenta-glow: rgba(var(--mau-magenta-rgb), 0.2);
+
+  --mau-sidebar: #1d1d1f; /* Image 1 dark charcoal sidebar */
+  --mau-sidebar-elevated: #26262b;
+  --mau-sidebar-border: rgba(255, 255, 255, 0.04);
+  --mau-sidebar-hover: rgba(255, 255, 255, 0.08);
+
+  --mau-page-bg: #f4f5f6; /* Image 2 white/grey layout */
+  --mau-page-surface: #ffffff;
+  --mau-card: #ffffff;
+  --mau-text: #1d2125;
+  --mau-text-secondary: #444d56;
+  --mau-text-muted: #6a737d;
+  --mau-border: #d1d5da;
+  --mau-border-subtle: #e1e4e8;
+
+  --mau-radius-sm: 0px; /* Sharp corners for active sidebar */
+  --mau-radius-md: 4px; /* Minimal curvature */
+  --mau-radius-lg: 6px;
+
+  --mau-shadow-soft: 0 1px 2px rgba(27, 31, 35, 0.04); /* Flat design */
+  --mau-shadow-card: 0 1px 2px rgba(27, 31, 35, 0.04); /* Almost flat */
+  --mau-shadow-brand: none;
+  --mau-shadow-brand-hover: 0 2px 6px rgba(var(--mau-magenta-rgb), 0.2);
+  --mau-focus-ring: 0 0 0 2px rgba(var(--mau-magenta-rgb), 0.25);
+
+  --mau-panel-overlay: rgba(0, 0, 0, 0.5);
+
+  /* New LMS specific variables */
+  --mau-lms-serif: 'Georgia', 'Times New Roman', serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  color: var(--mau-text);
+  background: var(--mau-page-bg);
+}
+
+.app-boot {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--mau-page-bg);
+  color: var(--mau-text-muted);
+}
+
+.app-boot p {
+  margin: 0;
+  font-size: 0.9375rem;
+}

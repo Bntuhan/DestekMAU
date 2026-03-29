@@ -1,0 +1,127 @@
+.assign-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.assign-hero-title {
+  margin: 0;
+  font-size: 2.1rem;
+  font-family: var(--mau-lms-serif);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--mau-text);
+  line-height: 1.2;
+}
+
+.assign-hero-lead {
+  margin: 0.35rem 0 0;
+  font-size: 0.9375rem;
+  color: var(--mau-text-muted);
+  line-height: 1.45;
+  max-width: 28rem;
+}
+
+.assign-refresh {
+  flex-shrink: 0;
+}
+
+.assign-error {
+  color: #b71c1c;
+  font-size: 0.875rem;
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  background: rgba(198, 40, 40, 0.08);
+  border-radius: var(--mau-radius-sm);
+}
+
+.assign-table-wrap {
+  overflow-x: auto;
+  padding: 0;
+  box-shadow: var(--mau-shadow-card);
+  border: 1px solid var(--mau-border-subtle);
+}
+
+.assign-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.assign-table th,
+.assign-table td {
+  text-align: left;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--mau-border-subtle);
+  vertical-align: middle;
+}
+
+.assign-table th {
+  background: linear-gradient(180deg, #fafbfc 0%, var(--mau-page-bg) 100%);
+  font-weight: 700;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--mau-text-muted);
+}
+
+.assign-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.assign-table tbody tr:hover {
+  background: rgba(var(--mau-magenta-rgb), 0.03);
+}
+
+.assign-row-busy {
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.assign-id {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--mau-magenta);
+  width: 3rem;
+}
+
+.assign-cell-title {
+  max-width: 14rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+  color: var(--mau-text);
+}
+
+.assign-empty-cell {
+  text-align: center;
+  color: var(--mau-text-muted);
+  padding: 2rem 1rem !important;
+}
+
+.assign-select {
+  max-width: 11rem;
+  width: 100%;
+  font-size: 0.8125rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: var(--mau-radius-sm);
+  border: 1px solid var(--mau-border);
+  background: var(--mau-card);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.assign-select:focus {
+  outline: none;
+  border-color: var(--mau-magenta);
+  box-shadow: var(--mau-focus-ring);
+}
+
+.assign-actions {
+  color: var(--mau-text-muted);
+  font-size: 0.8rem;
+  width: 2rem;
+}
