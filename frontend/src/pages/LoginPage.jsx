@@ -62,20 +62,24 @@ export default function LoginPage() {
       <div className="login-columns">
         <section className="login-panel login-panel--brand">
           <h1 className="login-uni">Maltepe Üniversitesi</h1>
-          <img src="/logo.svg" alt="Maltepe Üniversitesi Logosu" className="login-logo-mark" />
+          <img src="/maltepe-logo.png" alt="Maltepe Üniversitesi Logosu" className="login-logo-mark" />
           <p className="login-intro">
             Bilgi işlem destek portalına hoş geldiniz. Taleplerinizi açın, durumunu takip edin;
             yetkili personel atama ve kapatma işlemlerini yürütür.
           </p>
           <p className="login-demo-hint">
-            <strong>Demo:</strong> ogrenci@maltepe.edu.tr / maltepe2026 — destek@maltepe.edu.tr /
-            super2026
+            <strong>Demo:</strong> ogrenci@maltepe.edu.tr / artuklu2026 — destek@maltepe.edu.tr / super2026
           </p>
         </section>
 
         <section className="login-panel login-panel--form">
-          <h2 className="login-heading">Kullanıcı girişi</h2>
-          <p className="login-note">Kurumsal e-postanızı kullanın.</p>
+          <div className="login-form-header">
+            <img src="/maltepe-logo.png" alt="Logomuz" className="login-form-logo" />
+            <div>
+              <h2 className="login-heading">Kullanıcı girişi</h2>
+              <p className="login-note">Kurumsal e-postanızı kullanın.</p>
+            </div>
+          </div>
           <form className="login-form" onSubmit={onSubmit}>
             <label className="login-label">
               E-posta

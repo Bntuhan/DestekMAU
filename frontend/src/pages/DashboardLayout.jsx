@@ -49,7 +49,7 @@ export default function DashboardLayout() {
       <aside className="dash-sidebar" aria-label="Ana menü">
         <div className="dash-brand">
           <div className="dash-logo-wrap">
-            <img src="/logo.svg" alt="Logo" className="dash-logo" />
+            <img src="/maltepe-logo.png" alt="Logo" className="dash-logo" />
             <div className="dash-user">
               <span className="dash-user-name">{user?.display_name}</span>
               <span className="dash-user-meta">Maltepe Üniversitesi · Destek</span>

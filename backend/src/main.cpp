@@ -93,8 +93,8 @@ void init_db(const std::string &path) {
   if (n == 0) {
     db_exec(
         "INSERT INTO users (email, password, display_name, role) VALUES "
-        "('ogrenci@maltepe.edu.tr', 'maltepe2026', 'Demo Öğrenci', 'user'),"
-        "('destek@maltepe.edu.tr', 'super2026', 'Demo Destek', 'superuser')");
+        "('ogrenci@artuklu.edu.tr', 'artuklu2026', 'Demo Öğrenci', 'user'),"
+        "('destek@artuklu.edu.tr', 'super2026', 'Demo Destek', 'superuser');");
   }
 }
 

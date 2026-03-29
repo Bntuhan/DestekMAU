@@ -43,13 +43,16 @@ export default function StreamPage() {
   return (
     <div className="stream mau-page">
       <header className="stream-hero">
-        <div>
-          <h1 className="stream-hero-title">Talep akışı</h1>
-          <p className="stream-hero-lead">Tüm talepleriniz tek zaman çizelgesinde.</p>
+        <div className="stream-hero-content">
+          <div className="stream-hero-text">
+            <h1 className="stream-hero-title">Talep akışı</h1>
+            <p className="stream-hero-lead">Tüm talepleriniz tek zaman çizelgesinde.</p>
+          </div>
+          <Link to="/app/yeni-talep" className="mau-btn mau-btn--primary stream-cta">
+            Yeni talep
+          </Link>
         </div>
-        <Link to="/app/yeni-talep" className="mau-btn mau-btn--primary stream-cta">
-          Yeni talep
-        </Link>
+        <img src="/maltepe-logo.png" alt="Üniversite Logosu" className="stream-hero-logo" aria-hidden />
       </header>
 
       <div className="mau-toolbar stream-toolbar">

@@ -48,7 +48,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1.5rem;
-  max-width: 1160px;
+  max-width: 1400px;
   width: 100%;
   align-items: stretch;
 }
@@ -83,10 +83,11 @@
   display: block;
   max-width: 100%;
   height: auto;
-  max-height: 50px;
+  max-height: 240px;
   margin: 0 0 1.5rem 0;
   object-fit: contain;
   object-position: left center;
+  filter: brightness(0) invert(1);
 }
 
 .login-logo-year {
@@ -112,6 +113,21 @@
   margin: 0 0 0.35rem;
   font-size: 1.2rem;
   font-weight: 600;
+}
+
+.login-form-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.login-form-logo {
+  height: auto;
+  width: 100%;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
 }
 
 .login-note {
