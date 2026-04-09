@@ -21,6 +21,9 @@ using json = nlohmann::json;
 
 namespace {
 
+std::string g_freshdesk_domain = "";
+std::string g_freshdesk_apikey = "";
+
 std::mutex g_db_mutex;
 sqlite3 *g_db = nullptr;
 
@@ -65,7 +68,7 @@ void init_db(const std::string &path) {
       email TEXT NOT NULL UNIQUE,
       password TEXT NOT NULL,
       display_name TEXT NOT NULL,
-      role TEXT NOT NULL CHECK(role IN ('user','superuser'))
+      role TEXT NOT NULL CHECK(role IN ('user','superuser','support','manager'))
     );
     CREATE TABLE IF NOT EXISTS tickets (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -164,6 +167,13 @@ std::string now_iso() {
 int main(int argc, char **argv) {
   std::string db_path = "destek_mau.db";
   if (argc > 1) db_path = argv[1];
+
+  if (const char* env_domain = std::getenv("FRESHDESK_DOMAIN")) {
+    g_freshdesk_domain = env_domain;
+  }
+  if (const char* env_key = std::getenv("FRESHDESK_API_KEY")) {
+    g_freshdesk_apikey = env_key;
+  }
 
   try {
     fs::path dir = fs::path(db_path).parent_path();
@@ -280,8 +290,12 @@ int main(int argc, char **argv) {
         "u.display_name AS owner_name, a.display_name AS assignee_name "
         "FROM tickets t JOIN users u ON u.id = t.user_id "
         "LEFT JOIN users a ON a.id = t.assignee_id WHERE 1=1 ";
-    if (me->role != "superuser") {
-      sql += "AND t.user_id = ? ";
+    if (me->role != "superuser" && me->role != "manager") {
+      if (me->role == "support") {
+        sql += "AND t.assignee_id = ? ";
+      } else {
+        sql += "AND t.user_id = ? ";
+      }
     }
     if (!status_filter.empty() && status_filter != "all") {
       sql += "AND t.status = ? ";
@@ -294,7 +308,7 @@ int main(int argc, char **argv) {
       return;
     }
     int bind = 1;
-    if (me->role != "superuser") sqlite3_bind_int64(st, bind++, me->id);
+    if (me->role != "superuser" && me->role != "manager") sqlite3_bind_int64(st, bind++, me->id);
     if (!status_filter.empty() && status_filter != "all")
       sqlite3_bind_text(st, bind++, status_filter.c_str(), -1, SQLITE_TRANSIENT);
 
@@ -383,6 +397,34 @@ int main(int argc, char **argv) {
     }
     sqlite3_finalize(st);
     int64_t new_id = sqlite3_last_insert_rowid(g_db);
+
+    // --- Freshdesk Integration ---
+    if (!g_freshdesk_domain.empty() && !g_freshdesk_apikey.empty()) {
+      int fd_priority = 1; // 1: Low in Freshdesk
+      if (priority == "normal") fd_priority = 2; // Medium
+      else if (priority == "high") fd_priority = 3; // High
+
+      json fd_payload = {
+          {"description", description},
+          {"subject", title},
+          {"email", me->email},
+          {"priority", fd_priority},
+          {"status", 2} // 2: Open in Freshdesk
+      };
+      std::string fd_json = fd_payload.dump();
+      
+      // Escape single quotes for shell literal
+      std::string safe_json;
+      for (char c : fd_json) {
+          if (c == '\'') safe_json += "'\\''";
+          else safe_json += c;
+      }
+      
+      std::string cmd = "curl -s -u \"" + g_freshdesk_apikey + ":X\" -H \"Content-Type: application/json\" -d '" + safe_json + "' -X POST \"https://" + g_freshdesk_domain + ".freshdesk.com/api/v2/tickets\" > /dev/null 2>&1 &";
+      std::system(cmd.c_str());
+    }
+    // -----------------------------
+
     json out{{"id", new_id}, {"status", "created"}};
     res.status = 201;
     res.set_content(out.dump(), "application/json");
@@ -399,7 +441,7 @@ int main(int argc, char **argv) {
                 return;
               }
               auto me = user_from_token(*tok);
-              if (!me || me->role != "superuser") {
+              if (!me || (me->role != "superuser" && me->role != "manager" && me->role != "support")) {
                 res.status = 403;
                 res.set_content(json{{"error", "forbidden"}}.dump(), "application/json");
                 return;
@@ -457,6 +499,11 @@ int main(int argc, char **argv) {
               }
 
               if (body.contains("assignee_id")) {
+                if (me->role == "support") {
+                  res.status = 403;
+                  res.set_content(json{{"error", "forbidden_assignment"}}.dump(), "application/json");
+                  return;
+                }
                 if (body["assignee_id"].is_null()) {
                   sqlite3_stmt *st = nullptr;
                   const char *sql =
@@ -499,7 +546,7 @@ int main(int argc, char **argv) {
       return;
     }
     auto me = user_from_token(*tok);
-    if (!me || me->role != "superuser") {
+    if (!me || (me->role != "superuser" && me->role != "manager")) {
       res.status = 403;
       res.set_content(json{{"error", "forbidden"}}.dump(), "application/json");
       return;
@@ -507,7 +554,7 @@ int main(int argc, char **argv) {
 
     std::lock_guard<std::mutex> dblock(g_db_mutex);
     sqlite3_stmt *st = nullptr;
-    const char *sql = "SELECT id, display_name FROM users WHERE role = 'superuser'";
+    const char *sql = "SELECT id, display_name FROM users WHERE role IN ('superuser', 'manager', 'support')";
     if (sqlite3_prepare_v2(g_db, sql, -1, &st, nullptr) != SQLITE_OK) {
       res.status = 500;
       return;
@@ -546,8 +593,12 @@ int main(int argc, char **argv) {
         "u.display_name AS owner_name, a.display_name AS assignee_name "
         "FROM tickets t JOIN users u ON u.id = t.user_id "
         "LEFT JOIN users a ON a.id = t.assignee_id WHERE t.id = ?";
-    if (me->role != "superuser") {
-      sql += " AND t.user_id = ?";
+    if (me->role != "superuser" && me->role != "manager") {
+      if (me->role == "support") {
+        sql += " AND t.assignee_id = ?";
+      } else {
+        sql += " AND t.user_id = ?";
+      }
     }
 
     sqlite3_stmt *st = nullptr;
@@ -556,7 +607,7 @@ int main(int argc, char **argv) {
       return;
     }
     sqlite3_bind_int64(st, 1, ticket_id);
-    if (me->role != "superuser") {
+    if (me->role != "superuser" && me->role != "manager") {
       sqlite3_bind_int64(st, 2, me->id);
     }
 
@@ -598,7 +649,7 @@ int main(int argc, char **argv) {
       return;
     }
     auto me = user_from_token(*tok);
-    if (!me || me->role != "superuser") {
+    if (!me || (me->role != "superuser" && me->role != "manager")) {
       res.status = 403;
       res.set_content(json{{"error", "forbidden"}}.dump(), "application/json");
       return;
@@ -622,7 +673,7 @@ int main(int argc, char **argv) {
       res.set_content(json{{"error", "all_fields_required"}}.dump(), "application/json");
       return;
     }
-    if (role != "user" && role != "superuser") role = "user";
+    if (role != "user" && role != "superuser" && role != "support" && role != "manager") role = "user";
 
     std::lock_guard<std::mutex> dblock(g_db_mutex);
     sqlite3_stmt *st = nullptr;

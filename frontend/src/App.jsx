@@ -21,8 +21,8 @@ function PrivateRoute({ children }) {
   return children
 }
 
-function SuperRoute({ children }) {
-  const { user, ready, isSuper } = useAuth()
+function ManagerRoute({ children }) {
+  const { user, ready, isManager } = useAuth()
   if (!ready) {
     return (
       <div className="app-boot">
@@ -31,7 +31,7 @@ function SuperRoute({ children }) {
     )
   }
   if (!user) return <Navigate to="/" replace />
-  if (!isSuper) return <Navigate to="/app" replace />
+  if (!isManager) return <Navigate to="/app" replace />
   return children
 }
 
@@ -53,17 +53,17 @@ export default function App() {
         <Route
           path="kullanici-ekle"
           element={
-            <SuperRoute>
+            <ManagerRoute>
               <NewUserPage />
-            </SuperRoute>
+            </ManagerRoute>
           }
         />
         <Route
           path="atama"
           element={
-            <SuperRoute>
+            <ManagerRoute>
               <AssignPage />
-            </SuperRoute>
+            </ManagerRoute>
           }
         />
       </Route>

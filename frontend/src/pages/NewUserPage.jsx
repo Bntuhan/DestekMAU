@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth.jsx'
+import * as api from '../api.js'
 import './NewUserPage.css'
 
 export default function NewUserPage() {
@@ -36,19 +37,7 @@ export default function NewUserPage() {
     setSuccess(false)
     
     try {
-      const res = await fetch('http://127.0.0.1:8080/api/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      })
-      
-      const data = await res.json()
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to create user')
-      }
+      await api.createUser(formData)
       
       setSuccess(true)
       setFormData({
@@ -143,8 +132,9 @@ export default function NewUserPage() {
                 value={formData.role} 
                 onChange={handleChange}
               >
-                <option value="user">Öğrenci / Normal Kullanıcı (user)</option>
-                <option value="superuser">Destek Personeli / Yönetici (superuser)</option>
+                <option value="user">Öğrenci</option>
+                <option value="support">Destek Personeli</option>
+                <option value="manager">Yönetici</option>
               </select>
             </div>
           </div>

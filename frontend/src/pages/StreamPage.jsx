@@ -17,7 +17,7 @@ function priorityClass(p) {
 }
 
 export default function StreamPage() {
-  const { isSuper } = useAuth()
+  const { isSuper, isSupport } = useAuth()
   const [filter, setFilter] = useState('all')
   const [tickets, setTickets] = useState([])
   const [loading, setLoading] = useState(true)
@@ -48,9 +48,11 @@ export default function StreamPage() {
             <h1 className="stream-hero-title">Talep akışı</h1>
             <p className="stream-hero-lead">Tüm talepleriniz tek zaman çizelgesinde.</p>
           </div>
-          <Link to="/app/yeni-talep" className="mau-btn mau-btn--primary stream-cta">
-            Yeni talep
-          </Link>
+          {!isSupport && (
+            <Link to="/app/yeni-talep" className="mau-btn mau-btn--primary stream-cta">
+              Yeni talep
+            </Link>
+          )}
         </div>
         <img src="/maltepe-logo.png" alt="Üniversite Logosu" className="stream-hero-logo" aria-hidden />
       </header>
@@ -83,9 +85,11 @@ export default function StreamPage() {
           <div className="stream-empty mau-card">
             <p className="stream-empty-title">Henüz talep yok</p>
             <p className="stream-empty-text">Bu filtrede görüntülenecek kayıt bulunmuyor.</p>
-            <Link to="/app/yeni-talep" className="mau-btn mau-btn--primary">
-              İlk talebi oluştur
-            </Link>
+            {!isSupport && (
+              <Link to="/app/yeni-talep" className="mau-btn mau-btn--primary">
+                İlk talebi oluştur
+              </Link>
+            )}
           </div>
         ) : null}
         <ul className="stream-list">

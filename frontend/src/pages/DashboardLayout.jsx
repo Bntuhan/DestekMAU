@@ -36,7 +36,7 @@ function IconAddUser() {
 }
 
 export default function DashboardLayout() {
-  const { user, signOut, isSuper } = useAuth()
+  const { user, signOut, isManager, isSupport } = useAuth()
   const navigate = useNavigate()
 
   function logout() {
@@ -61,11 +61,13 @@ export default function DashboardLayout() {
             <IconTickets />
             Talepler
           </NavLink>
-          <NavLink to="/app/yeni-talep" className="dash-nav-link">
-            <IconPlus />
-            Yeni talep
-          </NavLink>
-          {isSuper ? (
+          {!isSupport && (
+            <NavLink to="/app/yeni-talep" className="dash-nav-link">
+              <IconPlus />
+              Yeni talep
+            </NavLink>
+          )}
+          {isManager ? (
             <>
               <NavLink to="/app/kullanici-ekle" className="dash-nav-link">
                 <IconAddUser />

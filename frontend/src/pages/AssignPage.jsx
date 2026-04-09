@@ -9,6 +9,8 @@ export default function AssignPage() {
   const [err, setErr] = useState('')
   const [assigning, setAssigning] = useState(null)
 
+  const [draftAssignee, setDraftAssignee] = useState({})
+
   const load = useCallback(async () => {
     setLoading(true)
     setErr('')
@@ -19,6 +21,7 @@ export default function AssignPage() {
       ])
       setTickets(tData.tickets || [])
       setStaff(sData.staff || [])
+      setDraftAssignee({})
     } catch (e) {
       setErr(e.message || 'Liste yüklenemedi')
     } finally {
@@ -30,12 +33,14 @@ export default function AssignPage() {
     load()
   }, [load])
 
-  async function assign(ticketId, assigneeId) {
+  async function assign(ticketId) {
+    const assigneeId = draftAssignee[ticketId]
+    if (assigneeId === undefined) return
+    
     setAssigning(ticketId)
     setErr('')
     try {
-      const body =
-        assigneeId === '' ? { assignee_id: null } : { assignee_id: Number(assigneeId) }
+      const body = assigneeId === '' ? { assignee_id: null } : { assignee_id: Number(assigneeId) }
       await api.patchTicket(ticketId, body)
       await load()
     } catch (e) {
@@ -58,6 +63,10 @@ export default function AssignPage() {
     }
   }
 
+  function handleDraftChange(ticketId, val) {
+    setDraftAssignee((prev) => ({ ...prev, [ticketId]: val }))
+  }
+
   return (
     <div className="assign mau-page">
       <header className="assign-hero">
@@ -76,9 +85,9 @@ export default function AssignPage() {
             <tr>
               <th>ID</th>
               <th>Başlık</th>
-              <th>Açan</th>
+              <th>Öğrenci</th>
               <th>Durum</th>
-              <th>Atanan</th>
+              <th>Personel</th>
               <th />
             </tr>
           </thead>
@@ -90,43 +99,63 @@ export default function AssignPage() {
                 </td>
               </tr>
             ) : null}
-            {tickets.map((t) => (
-              <tr key={t.id} className={assigning === t.id ? 'assign-row-busy' : ''}>
-                <td className="assign-id">{t.id}</td>
-                <td className="assign-cell-title" title={t.title}>
-                  {t.title}
-                </td>
-                <td>{t.owner_name}</td>
-                <td>
-                  <select
-                    className="assign-select"
-                    value={t.status}
-                    disabled={assigning === t.id}
-                    onChange={(e) => setStatus(t.id, e.target.value)}
-                  >
-                    <option value="open">Açık</option>
-                    <option value="assigned">Atanmış</option>
-                    <option value="closed">Kapatılmış</option>
-                  </select>
-                </td>
-                <td>
-                  <select
-                    className="assign-select"
-                    value={t.assignee_id ?? ''}
-                    disabled={assigning === t.id}
-                    onChange={(e) => assign(t.id, e.target.value)}
-                  >
-                    <option value="">— Atanmadı —</option>
-                    {staff.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.display_name}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td className="assign-actions">{assigning === t.id ? '…' : ''}</td>
-              </tr>
-            ))}
+            {tickets.map((t) => {
+              const currentVal = t.assignee_id ?? ''
+              const draftVal = draftAssignee[t.id] ?? currentVal
+              const hasDraft = draftAssignee[t.id] !== undefined && draftAssignee[t.id] !== String(currentVal)
+
+              return (
+                <tr key={t.id} className={assigning === t.id ? 'assign-row-busy' : ''}>
+                  <td className="assign-id">{t.id}</td>
+                  <td className="assign-cell-title" title={t.title}>
+                    {t.title}
+                  </td>
+                  <td>{t.owner_name}</td>
+                  <td>
+                    <select
+                      className="assign-select"
+                      value={t.status}
+                      disabled={assigning === t.id}
+                      onChange={(e) => setStatus(t.id, e.target.value)}
+                    >
+                      <option value="open">Açık</option>
+                      <option value="assigned">Atanmış</option>
+                      <option value="closed">Kapatılmış</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select
+                      className="assign-select"
+                      value={draftVal}
+                      disabled={assigning === t.id}
+                      onChange={(e) => handleDraftChange(t.id, e.target.value)}
+                    >
+                      <option value="">— Atanmadı —</option>
+                      {staff.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.display_name}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="assign-actions">
+                    {assigning === t.id ? (
+                      '…'
+                    ) : (
+                      <button 
+                        type="button"
+                        className="mau-btn mau-btn--primary" 
+                        style={{ padding: '0.4rem 0.8rem', fontSize: '13px' }} 
+                        onClick={() => assign(t.id)}
+                        disabled={!hasDraft}
+                      >
+                        Kaydet
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>

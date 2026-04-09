@@ -21,6 +21,13 @@ export async function api(path, options = {}) {
     }
   }
   if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem('destek_token')
+      localStorage.removeItem('destek_user')
+      if (window.location.pathname !== '/') {
+        window.location.href = '/'
+      }
+    }
     const err = new Error(data?.error || res.statusText || 'İstek başarısız')
     err.status = res.status
     err.data = data
@@ -45,6 +52,10 @@ export function fetchTickets(status = 'all') {
   return api(`/api/tickets${q}`)
 }
 
+export function fetchTicket(id) {
+  return api(`/api/tickets/${id}`)
+}
+
 export function createTicket(payload) {
   return api('/api/tickets', {
     method: 'POST',
@@ -61,4 +72,11 @@ export function patchTicket(id, payload) {
 
 export function fetchSupportStaff() {
   return api('/api/support-staff')
+}
+
+export function createUser(payload) {
+  return api('/api/users', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
 }

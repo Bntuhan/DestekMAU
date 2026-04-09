@@ -61,7 +61,9 @@ export function AuthProvider({ children }) {
       ready,
       signIn,
       signOut,
-      isSuper: user?.role === 'superuser',
+      isSuper: user?.role === 'superuser' || user?.role === 'manager',
+      isManager: user?.role === 'superuser' || user?.role === 'manager',
+      isSupport: user?.role === 'support',
     }),
     [user, ready, signIn, signOut],
   )
