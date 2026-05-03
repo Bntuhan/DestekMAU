@@ -165,13 +165,13 @@ void init_db(const std::string &path) {
   sqlite3_finalize(st);
 
   if (n == 0) {
-    std::string s1 = crypto::hash_password("artuklu2026");
+    std::string s1 = crypto::hash_password("maltepe2026");
     std::string s2 = crypto::hash_password("super2026");
     
     sqlite3_stmt* is = nullptr;
     const char* isql = "INSERT INTO users (email, password, display_name, role) VALUES "
-                       "('ogrenci@artuklu.edu.tr', ?, 'Demo Öğrenci', 'user'),"
-                       "('destek@artuklu.edu.tr', ?, 'Demo Destek', 'superuser')";
+                       "('ogrenci@maltepe.edu.tr', ?, 'Demo Öğrenci', 'user'),"
+                       "('destek@maltepe.edu.tr', ?, 'Demo Destek', 'superuser')";
     sqlite3_prepare_v2(g_db, isql, -1, &is, nullptr);
     sqlite3_bind_text(is, 1, s1.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(is, 2, s2.c_str(), -1, SQLITE_TRANSIENT);
