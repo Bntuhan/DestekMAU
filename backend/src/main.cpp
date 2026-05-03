@@ -1391,8 +1391,14 @@ int main(int argc, char **argv) {
 
   svr.set_mount_point("/uploads", "./uploads");
 
-  std::cout << "Destek MAU API http://127.0.0.1:8080\n";
-  auto ret = svr.listen("127.0.0.1", 8080);
+  int port = 8080;
+  if (const char* env_p = std::getenv("PORT")) {
+    if (int p = std::atoi(env_p)) {
+      port = p;
+    }
+  }
+  std::cout << "Destek MAU API listening on 0.0.0.0:" << port << "\n";
+  auto ret = svr.listen("0.0.0.0", port);
   db_close();
   return ret ? 0 : 1;
 }
