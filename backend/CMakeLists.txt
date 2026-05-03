@@ -29,14 +29,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(jwt-cpp)
 
-find_package(SQLite3 REQUIRED)
+find_package(PostgreSQL REQUIRED)
 find_package(OpenSSL REQUIRED)
 
 add_executable(destek_api src/main.cpp)
 target_include_directories(destek_api PRIVATE ${httplib_SOURCE_DIR})
 target_link_libraries(destek_api PRIVATE 
     nlohmann_json::nlohmann_json 
-    SQLite::SQLite3 
+    PostgreSQL::PostgreSQL 
     jwt-cpp::jwt-cpp 
     OpenSSL::SSL 
     OpenSSL::Crypto

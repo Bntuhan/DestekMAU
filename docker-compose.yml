@@ -7,10 +7,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
-    volumes:
-      - db-data:/app/data
     environment:
-      - DATABASE_PATH=/app/data/destek_mau.db
+      - DATABASE_URL=postgres://kullanici_adi:sifre@sunucu_adresi.supabase.co:5432/postgres
       - JWT_SECRET=süper_gizli_anahtar_degistir_lutfen
     restart: unless-stopped
 
@@ -24,5 +22,3 @@ services:
       - backend
     restart: unless-stopped
 
-volumes:
-  db-data:

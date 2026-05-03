@@ -2,7 +2,7 @@
 #include <nlohmann/json.hpp>
 #include "crypto_utils.hpp"
 
-#include <sqlite3.h>
+#include "sqlite_to_pq.hpp"
 
 #include <ctime>
 
@@ -251,8 +251,15 @@ std::string now_iso() {
 } // namespace
 
 int main(int argc, char **argv) {
-  std::string db_path = "destek_mau.db";
-  if (argc > 1) db_path = argv[1];
+  std::string db_path = "";
+  if (const char* env_db = std::getenv("DATABASE_URL")) {
+    db_path = env_db;
+  } else if (argc > 1) {
+    db_path = argv[1];
+  } else {
+    std::cerr << "DATABASE_URL environment variable is required!\n";
+    return 1;
+  }
 
   if (const char* env_domain = std::getenv("FRESHDESK_DOMAIN")) {
     g_freshdesk_domain = env_domain;
@@ -262,8 +269,6 @@ int main(int argc, char **argv) {
   }
 
   try {
-    fs::path dir = fs::path(db_path).parent_path();
-    if (!dir.empty() && !fs::exists(dir)) fs::create_directories(dir);
     init_db(db_path);
   } catch (const std::exception &e) {
     std::cerr << e.what() << "\n";

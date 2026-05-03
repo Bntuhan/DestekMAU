@@ -4,7 +4,7 @@ RUN apk add --no-cache \
     g++ \
     cmake \
     make \
-    sqlite-dev \
+    postgresql-dev \
     git \
     openssl-dev \
     curl-dev \
@@ -17,11 +17,10 @@ WORKDIR /app/build
 RUN cmake -DCMAKE_BUILD_TYPE=Release .. && make -j$(nproc)
 
 FROM alpine:3.18
-RUN apk add --no-cache libgcc libstdc++ sqlite-libs openssl libcurl
+RUN apk add --no-cache libgcc libstdc++ libpq openssl libcurl
 WORKDIR /app
 COPY --from=builder /app/build/destek_api /app/destek_api
 
 EXPOSE 8080
-VOLUME /app/data
 
-CMD ["./destek_api", "/app/data/destek_mau.db"]
+CMD ["./destek_api"]
