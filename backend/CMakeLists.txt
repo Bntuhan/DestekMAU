@@ -6,27 +6,38 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(FetchContent)
 
+set(JWT_BUILD_EXAMPLES OFF CACHE BOOL "")
+set(JWT_DISABLE_PICOJSON ON CACHE BOOL "")
+
 FetchContent_Declare(
-  json
-  GIT_REPOSITORY https://github.com/nlohmann/json.git
-  GIT_TAG v3.11.3
-  GIT_SHALLOW ON
+  nlohmann_json
+  URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
 )
-FetchContent_MakeAvailable(json)
+FetchContent_MakeAvailable(nlohmann_json)
 
 FetchContent_Declare(
   httplib
-  GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
-  GIT_TAG v0.18.3
-  GIT_SHALLOW ON
+  URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v0.18.3.tar.gz
 )
-FetchContent_GetProperties(httplib)
-if(NOT httplib_POPULATED)
-  FetchContent_Populate(httplib)
-endif()
+FetchContent_MakeAvailable(httplib)
+
+set(nlohmann_json_DIR ${nlohmann_json_SOURCE_DIR})
+
+FetchContent_Declare(
+  jwt-cpp
+  URL https://github.com/Thalhammer/jwt-cpp/archive/refs/tags/v0.7.0.tar.gz
+)
+FetchContent_MakeAvailable(jwt-cpp)
 
 find_package(SQLite3 REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 add_executable(destek_api src/main.cpp)
 target_include_directories(destek_api PRIVATE ${httplib_SOURCE_DIR})
-target_link_libraries(destek_api PRIVATE nlohmann_json::nlohmann_json SQLite::SQLite3)
+target_link_libraries(destek_api PRIVATE 
+    nlohmann_json::nlohmann_json 
+    SQLite::SQLite3 
+    jwt-cpp::jwt-cpp 
+    OpenSSL::SSL 
+    OpenSSL::Crypto
+)

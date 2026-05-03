@@ -8,6 +8,7 @@ export default function NewTicketPage() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState('normal')
+  const [file, setFile] = useState(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -16,7 +17,12 @@ export default function NewTicketPage() {
     setError('')
     setLoading(true)
     try {
-      await api.createTicket({ title: title.trim(), description: description.trim(), priority })
+      let photo_path = ""
+      if (file) {
+        const uploadRes = await api.uploadFile(file)
+        photo_path = uploadRes.url
+      }
+      await api.createTicket({ title: title.trim(), description: description.trim(), priority, photo_path })
       navigate('/app', { replace: true })
     } catch (err) {
       setError(err.message || 'Kaydedilemedi')
@@ -44,16 +50,49 @@ export default function NewTicketPage() {
         </div>
         <div className="mau-card__body new-ticket-fields">
           <label className="mau-field">
-            <span>Başlık</span>
-            <input
+            <span>Talep Konusu (Kategori / Başlık)</span>
+            <select
               className="mau-input"
+              style={{
+                width: '100%',
+                padding: '0.6rem',
+                border: '1px solid var(--mau-border)',
+                borderRadius: 'var(--mau-radius-md)',
+                marginTop: '4px',
+                fontSize: '0.95rem'
+              }}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              maxLength={200}
-              placeholder="Kısa özet"
-              autoComplete="off"
-            />
+            >
+              <option value="" disabled>-- Lütfen Detaylı Bir Konu Seçiniz --</option>
+              <optgroup label="💻 Bilgi İşlem / Ağ ve Erişim (IT)">
+                <option value="Wi-Fi (Eduroam) Bağlantı Sağlanamıyor">Wi-Fi (Eduroam) Bağlantı Sağlanamıyor</option>
+                <option value="Kurumsal E-posta Şifre Sıfırlama / Giriş Sorunu">Kurumsal E-posta Şifre Sıfırlama / Giriş Sorunu</option>
+                <option value="Öğrenci Sistemine (OBS / LMS) Giriş Yapılamıyor">Öğrenci Sistemine (OBS / LMS) Giriş Yapılamıyor</option>
+                <option value="Sunucu / VPN Erişim Talebi">Sunucu / VPN Erişim Talebi</option>
+              </optgroup>
+              <optgroup label="🖥️ Donanım ve Sınıf İçi Teknolojiler">
+                <option value="Projeksiyon Cihazı Çalışmıyor / Görüntü Yok">Projeksiyon Cihazı Çalışmıyor / Görüntü Yok</option>
+                <option value="Laboratuvar Bilgisayarı Açılmıyor / Mavi Ekran">Laboratuvar Bilgisayarı Açılmıyor / Mavi Ekran</option>
+                <option value="Akıllı Tahta Dokunmatik Hatası / Kalibrasyon">Akıllı Tahta Dokunmatik Hatası / Kalibrasyon</option>
+                <option value="Yazıcı (Printer) Çıktı Vermiyor / Kağıt Sıkışması">Yazıcı (Printer) Çıktı Vermiyor / Kağıt Sıkışması</option>
+              </optgroup>
+              <optgroup label="📄 İdari İşler ve Belge Yönetimi">
+                <option value="Öğrenci Belgesi / Transkript Talep Hatası">Öğrenci Belgesi / Transkript Talep Hatası</option>
+                <option value="Kimlik Kartı Kayıp / Yenileme Talebi">Kimlik Kartı Kayıp / Yenileme Talebi</option>
+                <option value="Ders Kayıt Süreci Hataları (Danışman Onayı vb.)">Ders Kayıt Süreci Hataları (Danışman Onayı vb.)</option>
+              </optgroup>
+              <optgroup label="🏢 Fiziksel Altyapı ve Tesis Yönetimi">
+                <option value="Sınıf İçi Elektrik / Priz Arızası">Sınıf İçi Elektrik / Priz Arızası</option>
+                <option value="Klima / Havalandırma Çalışmıyor">Klima / Havalandırma Çalışmıyor</option>
+                <option value="Temizlik ve Hijyen Şikayetleri">Temizlik ve Hijyen Şikayetleri</option>
+                <option value="Asansör veya Kapı / Turnike Arızası">Asansör veya Kapı / Turnike Arızası</option>
+              </optgroup>
+              <optgroup label="❓ Diğer Başlıklar">
+                <option value="Diğer (Lütfen Açıklamada Belirtiniz)">Diğer (Lütfen Açıklamada Belirtiniz)</option>
+              </optgroup>
+            </select>
           </label>
           <label className="mau-field">
             <span>Öncelik</span>
@@ -71,6 +110,15 @@ export default function NewTicketPage() {
               required
               rows={8}
               placeholder="Sorunu adım adım yazın; hata mesajı varsa ekleyin."
+            />
+          </label>
+          <label className="mau-field">
+            <span>Fotoğraf Ekle (İsteğe Bağlı)</span>
+            <input
+              type="file"
+              accept="image/*"
+              className="mau-input"
+              onChange={(e) => setFile(e.target.files[0])}
             />
           </label>
           {error ? <p className="new-ticket-error">{error}</p> : null}

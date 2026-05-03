@@ -1,7 +1,9 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { useAuth } from './auth.jsx'
+import { useAuth, AuthProvider } from './auth.jsx'
+import { SettingsProvider } from './settings.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import DashboardLayout from './pages/DashboardLayout.jsx'
+import Dashboard from './pages/Dashboard.jsx'
 import StreamPage from './pages/StreamPage.jsx'
 import NewTicketPage from './pages/NewTicketPage.jsx'
 import AssignPage from './pages/AssignPage.jsx'
@@ -55,6 +57,14 @@ export default function App() {
           element={
             <ManagerRoute>
               <NewUserPage />
+            </ManagerRoute>
+          }
+        />
+        <Route
+          path="dashboard"
+          element={
+            <ManagerRoute>
+              <Dashboard />
             </ManagerRoute>
           }
         />

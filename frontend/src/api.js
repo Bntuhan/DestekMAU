@@ -80,3 +80,61 @@ export function createUser(payload) {
     body: JSON.stringify(payload),
   })
 }
+
+export function uploadFile(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  
+  const token = getToken()
+  const headers = {}
+  if (token) headers.Authorization = `Bearer ${token}`
+
+  return fetch('/api/upload', {
+    method: 'POST',
+    headers,
+    body: formData
+  }).then(async res => {
+    const text = await res.text()
+    let data = {}
+    try { data = JSON.parse(text) } catch(e) {}
+    if (!res.ok) throw new Error(data.error || 'Yükleme başarısız')
+    return data
+  })
+}
+
+export function fetchTicketHistory(id) {
+  return api(`/api/tickets/${id}/history`)
+}
+
+export function fetchNotifications() {
+  return api('/api/notifications')
+}
+
+export function markNotificationRead(id) {
+  return api(`/api/notifications/${id}/read`, { method: 'PATCH' })
+}
+
+export function addTicketHistory(id, actionText) {
+  return api(`/api/tickets/${id}/history`, {
+    method: 'POST',
+    body: JSON.stringify({ action: actionText }),
+  })
+}
+
+export function requestTicketClose(id) {
+  return api(`/api/tickets/${id}/request_close`, {
+    method: 'POST'
+  })
+}
+
+export function pingTicketView(id) {
+  return api(`/api/tickets/${id}/ping_view`, { method: 'POST' })
+}
+
+export function fetchTicketViewers(id) {
+  return api(`/api/tickets/${id}/viewers`)
+}
+
+export function requestTicketBackup(id) {
+  return api(`/api/tickets/${id}/backup`, { method: 'POST' })
+}

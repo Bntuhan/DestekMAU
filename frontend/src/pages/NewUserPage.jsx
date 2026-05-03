@@ -12,7 +12,7 @@ export default function NewUserPage() {
     display_name: '',
     email: '',
     password: '',
-    role: 'user'
+    university_title: 'student'
   })
   
   const [loading, setLoading] = useState(false)
@@ -36,15 +36,46 @@ export default function NewUserPage() {
     setError(null)
     setSuccess(false)
     
+    // Map the university_title to DB role and user_type
+    let dbRole = 'user'
+    let dbUserType = 'Öğrenci'
+    
+    switch(formData.university_title) {
+      case 'student':
+        dbRole = 'user'
+        dbUserType = 'Öğrenci'
+        break
+      case 'academic':
+        dbRole = 'user'
+        dbUserType = 'Akademik Personel'
+        break
+      case 'support':
+        dbRole = 'support'
+        dbUserType = 'Teknik / Destek Görevlisi'
+        break
+      case 'manager':
+        dbRole = 'manager'
+        dbUserType = 'Yönetim Görevlisi'
+        break
+    }
+
+    const payload = {
+      display_name: formData.display_name,
+      email: formData.email,
+      password: formData.password,
+      role: dbRole,
+      user_type: dbUserType
+    }
+    
     try {
-      await api.createUser(formData)
+      await api.createUser(payload)
       
       setSuccess(true)
       setFormData({
         display_name: '',
         email: '',
         password: '',
-        role: 'user'
+        university_title: 'student'
       })
       
       // Navigate to the dashboard after a short delay
@@ -124,17 +155,19 @@ export default function NewUserPage() {
           </div>
           
           <div className="nu-form-group">
-            <label htmlFor="role">Rol</label>
+            <label htmlFor="university_title">Kişinin Üniversitedeki Rolü / Yetkisi</label>
             <div className="nu-select-wrap">
               <select 
-                id="role" 
-                name="role" 
-                value={formData.role} 
+                id="university_title" 
+                name="university_title" 
+                value={formData.university_title} 
                 onChange={handleChange}
+                required
               >
-                <option value="user">Öğrenci</option>
-                <option value="support">Destek Personeli</option>
-                <option value="manager">Yönetici</option>
+                <option value="student">Öğrenci (Sadece kendi taleplerini açar)</option>
+                <option value="academic">Akademik Görevli (Kendi talebini açar, öncelikli kayıt)</option>
+                <option value="support">Teknik / Destek Görevlisi (Atanan talepleri okur / ilgilenir)</option>
+                <option value="manager">Yönetim Görevlisi (Tüm sistemi yönetir / Onaylayıp kapatır)</option>
               </select>
             </div>
           </div>

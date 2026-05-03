@@ -39,6 +39,18 @@
   --mau-lms-serif: 'Georgia', 'Times New Roman', serif;
 }
 
+[data-theme='dark'] {
+  --mau-page-bg: #111113;
+  --mau-page-surface: #1e1e21;
+  --mau-card: #1e1e21;
+  --mau-text: #e1e3e5;
+  --mau-text-secondary: #a1a6b0;
+  --mau-text-muted: #7b818d;
+  --mau-border: #313338;
+  --mau-border-subtle: #242528;
+  --mau-sidebar: #09090a;
+}
+
 *,
 *::before,
 *::after {
@@ -72,4 +84,9 @@ body {
 .app-boot p {
   margin: 0;
   font-size: 0.9375rem;
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
 }
