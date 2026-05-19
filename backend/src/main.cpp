@@ -147,6 +147,7 @@ void init_db(const std::string &path) {
       created_at TEXT NOT NULL,
       link TEXT,
       FOREIGN KEY(user_id) REFERENCES users(id)
+    );
     CREATE TABLE IF NOT EXISTS ticket_assignees (
       ticket_id INTEGER NOT NULL,
       user_id INTEGER NOT NULL,
