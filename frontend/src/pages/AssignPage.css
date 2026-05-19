@@ -60,7 +60,7 @@
 }
 
 .assign-table th {
-  background: linear-gradient(180deg, #fafbfc 0%, var(--mau-page-bg) 100%);
+  background: var(--mau-page-bg);
   font-weight: 700;
   font-size: 0.7rem;
   text-transform: uppercase;
