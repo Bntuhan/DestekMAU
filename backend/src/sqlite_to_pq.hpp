@@ -136,7 +136,7 @@ inline int sqlite3_step(sqlite3_stmt *pStmt) {
         }
         
         std::string sql = pStmt->pg_sql;
-        if (sql.find("INSERT INTO") != std::string::npos && sql.find("RETURNING id") == std::string::npos) {
+        if (sql.find("INSERT INTO") != std::string::npos && sql.find("RETURNING id") == std::string::npos && sql.find("ticket_assignees") == std::string::npos) {
             sql += " RETURNING id";
         }
         

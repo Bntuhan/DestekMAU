@@ -164,7 +164,7 @@ void init_db(const std::string &path) {
   try_alter("ALTER TABLE tickets ADD COLUMN rating INTEGER");
 
   // Migrate old assignee_id data to ticket_assignees
-  try_alter("INSERT OR IGNORE INTO ticket_assignees (ticket_id, user_id, is_completed) SELECT id, assignee_id, 0 FROM tickets WHERE assignee_id IS NOT NULL");
+  try_alter("INSERT INTO ticket_assignees (ticket_id, user_id, is_completed) SELECT id, assignee_id, 0 FROM tickets WHERE assignee_id IS NOT NULL ON CONFLICT DO NOTHING");
 
   sqlite3_stmt *st = nullptr;
   const char *count_sql = "SELECT COUNT(*) FROM users";
