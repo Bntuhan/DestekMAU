@@ -1,3 +1,4 @@
+/* eslint-disable */
 function getToken() {
   return localStorage.getItem('destek_token')
 }

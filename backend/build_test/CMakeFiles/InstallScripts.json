@@ -1,0 +1,10 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/bntuhan/Desktop/coding/DestekMAU/backend/build_test/cmake_install.cmake",
+		"/Users/bntuhan/Desktop/coding/DestekMAU/backend/build_test/_deps/nlohmann_json-build/cmake_install.cmake",
+		"/Users/bntuhan/Desktop/coding/DestekMAU/backend/build_test/_deps/httplib-build/cmake_install.cmake",
+		"/Users/bntuhan/Desktop/coding/DestekMAU/backend/build_test/_deps/jwt-cpp-build/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
