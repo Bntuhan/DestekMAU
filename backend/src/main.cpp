@@ -147,6 +147,13 @@ void init_db(const std::string &path) {
       created_at TEXT NOT NULL,
       link TEXT,
       FOREIGN KEY(user_id) REFERENCES users(id)
+    CREATE TABLE IF NOT EXISTS ticket_assignees (
+      ticket_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      is_completed INTEGER DEFAULT 0,
+      FOREIGN KEY(ticket_id) REFERENCES tickets(id),
+      FOREIGN KEY(user_id) REFERENCES users(id),
+      PRIMARY KEY(ticket_id, user_id)
     );
   )SQL");
 
@@ -155,6 +162,9 @@ void init_db(const std::string &path) {
 
   try_alter("ALTER TABLE tickets ADD COLUMN resolved_at TEXT");
   try_alter("ALTER TABLE tickets ADD COLUMN rating INTEGER");
+
+  // Migrate old assignee_id data to ticket_assignees
+  try_alter("INSERT OR IGNORE INTO ticket_assignees (ticket_id, user_id, is_completed) SELECT id, assignee_id, 0 FROM tickets WHERE assignee_id IS NOT NULL");
 
   sqlite3_stmt *st = nullptr;
   const char *count_sql = "SELECT COUNT(*) FROM users";
@@ -476,13 +486,13 @@ int main(int argc, char **argv) {
 
     std::string sql =
         "SELECT t.id, t.user_id, t.title, t.description, t.status, t.priority, "
-        "t.assignee_id, t.photo_path, t.created_at, t.updated_at, "
-        "u.display_name AS owner_name, a.display_name AS assignee_name "
+        "t.photo_path, t.created_at, t.updated_at, "
+        "u.display_name AS owner_name "
         "FROM tickets t JOIN users u ON u.id = t.user_id "
-        "LEFT JOIN users a ON a.id = t.assignee_id WHERE 1=1 ";
+        "WHERE 1=1 ";
     if (me->role != "superuser" && me->role != "manager") {
       if (me->role == "support") {
-        sql += "AND t.assignee_id = ? ";
+        sql += "AND t.id IN (SELECT ticket_id FROM ticket_assignees WHERE user_id = ?) ";
       } else {
         sql += "AND t.user_id = ? ";
       }
@@ -512,21 +522,30 @@ int main(int argc, char **argv) {
       item["status"] = reinterpret_cast<const char *>(sqlite3_column_text(st, 4));
       item["priority"] = reinterpret_cast<const char *>(sqlite3_column_text(st, 5));
       if (sqlite3_column_type(st, 6) == SQLITE_NULL)
-        item["assignee_id"] = nullptr;
-      else
-        item["assignee_id"] = sqlite3_column_int64(st, 6);
-      if (sqlite3_column_type(st, 7) == SQLITE_NULL)
         item["photo_path"] = nullptr;
       else
-        item["photo_path"] = reinterpret_cast<const char *>(sqlite3_column_text(st, 7));
-      item["created_at"] = reinterpret_cast<const char *>(sqlite3_column_text(st, 8));
-      item["updated_at"] = reinterpret_cast<const char *>(sqlite3_column_text(st, 9));
-      item["owner_name"] = reinterpret_cast<const char *>(sqlite3_column_text(st, 10));
-      if (sqlite3_column_type(st, 11) == SQLITE_NULL)
-        item["assignee_name"] = nullptr;
-      else
-        item["assignee_name"] =
-            reinterpret_cast<const char *>(sqlite3_column_text(st, 11));
+        item["photo_path"] = reinterpret_cast<const char *>(sqlite3_column_text(st, 6));
+      item["created_at"] = reinterpret_cast<const char *>(sqlite3_column_text(st, 7));
+      item["updated_at"] = reinterpret_cast<const char *>(sqlite3_column_text(st, 8));
+      item["owner_name"] = reinterpret_cast<const char *>(sqlite3_column_text(st, 9));
+      
+      // Fetch assignees
+      sqlite3_stmt *ast = nullptr;
+      std::string asql = "SELECT a.user_id, u.display_name, a.is_completed FROM ticket_assignees a JOIN users u ON u.id = a.user_id WHERE a.ticket_id = ?";
+      json assignees = json::array();
+      if (sqlite3_prepare_v2(g_db, asql.c_str(), -1, &ast, nullptr) == SQLITE_OK) {
+        sqlite3_bind_int64(ast, 1, item["id"].get<int64_t>());
+        while (sqlite3_step(ast) == SQLITE_ROW) {
+            assignees.push_back({
+                {"id", sqlite3_column_int64(ast, 0)},
+                {"name", reinterpret_cast<const char *>(sqlite3_column_text(st, 1))},
+                {"is_completed", sqlite3_column_int(ast, 2) == 1}
+            });
+        }
+        sqlite3_finalize(ast);
+      }
+      item["assignees"] = assignees;
+      
       arr.push_back(item);
     }
     sqlite3_finalize(st);
@@ -753,58 +772,76 @@ int main(int argc, char **argv) {
                 }
               }
 
-              if (body.contains("assignee_id")) {
+              if (body.contains("assignees")) {
                 if (me->role == "support") {
                   res.status = 403;
                   res.set_content(json{{"error", "forbidden_assignment"}}.dump(), "application/json");
                   return;
                 }
-                if (body["assignee_id"].is_null()) {
-                  sqlite3_stmt *st = nullptr;
-                  const char *sql =
-                      "UPDATE tickets SET assignee_id = NULL, updated_at = ? WHERE id = ?";
-                  if (sqlite3_prepare_v2(g_db, sql, -1, &st, nullptr) != SQLITE_OK) {
-                    res.status = 500;
-                    return;
-                  }
-                  sqlite3_bind_text(st, 1, ts.c_str(), -1, SQLITE_TRANSIENT);
-                  sqlite3_bind_int64(st, 2, ticket_id);
-                  sqlite3_step(st);
-                  sqlite3_finalize(st);
-                } else {
-                  int64_t aid = body["assignee_id"].get<int64_t>();
-                  sqlite3_stmt *st = nullptr;
-                  const char *sql =
-                      "UPDATE tickets SET assignee_id = ?, status = CASE WHEN status = "
-                      "'open' THEN 'assigned' ELSE status END, updated_at = ? WHERE id = ?";
-                  if (sqlite3_prepare_v2(g_db, sql, -1, &st, nullptr) != SQLITE_OK) {
-                    res.status = 500;
-                    return;
-                  }
-                  sqlite3_bind_int64(st, 1, aid);
-                  sqlite3_bind_text(st, 2, ts.c_str(), -1, SQLITE_TRANSIENT);
-                  sqlite3_bind_int64(st, 3, ticket_id);
-                  sqlite3_step(st);
-                  sqlite3_finalize(st);
+                
+                std::vector<int64_t> new_assignees;
+                for (auto& a : body["assignees"]) {
+                    new_assignees.push_back(a.get<int64_t>());
+                }
 
-                  sqlite3_stmt *nst = nullptr;
-                  const char *nsql = "INSERT INTO notifications (user_id, message, created_at, link) VALUES (?, ?, ?, ?)";
-                  if (sqlite3_prepare_v2(g_db, nsql, -1, &nst, nullptr) == SQLITE_OK) {
-                    std::string msg = "Üzerinize #" + std::to_string(ticket_id) + " numaralı talep atandı.";
-                    std::string link = "/app/tickets/" + std::to_string(ticket_id);
-                    sqlite3_bind_int64(nst, 1, aid);
-                    sqlite3_bind_text(nst, 2, msg.c_str(), -1, SQLITE_TRANSIENT);
-                    sqlite3_bind_text(nst, 3, ts.c_str(), -1, SQLITE_TRANSIENT);
-                    sqlite3_bind_text(nst, 4, link.c_str(), -1, SQLITE_TRANSIENT);
-                    sqlite3_step(nst);
-                    sqlite3_finalize(nst);
-                  }
+                // Delete old assignees
+                sqlite3_stmt *dst = nullptr;
+                if (sqlite3_prepare_v2(g_db, "DELETE FROM ticket_assignees WHERE ticket_id = ?", -1, &dst, nullptr) == SQLITE_OK) {
+                    sqlite3_bind_int64(dst, 1, ticket_id);
+                    sqlite3_step(dst);
+                    sqlite3_finalize(dst);
+                }
+                
+                if (!new_assignees.empty()) {
+                    // Update status to assigned if open
+                    sqlite3_stmt *st = nullptr;
+                    const char *sql = "UPDATE tickets SET status = CASE WHEN status = 'open' THEN 'assigned' ELSE status END, updated_at = ? WHERE id = ?";
+                    if (sqlite3_prepare_v2(g_db, sql, -1, &st, nullptr) == SQLITE_OK) {
+                        sqlite3_bind_text(st, 1, ts.c_str(), -1, SQLITE_TRANSIENT);
+                        sqlite3_bind_int64(st, 2, ticket_id);
+                        sqlite3_step(st);
+                        sqlite3_finalize(st);
+                    }
+                    
+                    for (int64_t aid : new_assignees) {
+                        sqlite3_stmt *ist = nullptr;
+                        if (sqlite3_prepare_v2(g_db, "INSERT INTO ticket_assignees (ticket_id, user_id) VALUES (?, ?)", -1, &ist, nullptr) == SQLITE_OK) {
+                            sqlite3_bind_int64(ist, 1, ticket_id);
+                            sqlite3_bind_int64(ist, 2, aid);
+                            sqlite3_step(ist);
+                            sqlite3_finalize(ist);
+                        }
+                        
+                        // Notify assignee
+                        sqlite3_stmt *nst = nullptr;
+                        const char *nsql = "INSERT INTO notifications (user_id, message, created_at, link) VALUES (?, ?, ?, ?)";
+                        if (sqlite3_prepare_v2(g_db, nsql, -1, &nst, nullptr) == SQLITE_OK) {
+                          std::string msg = "Üzerinize #" + std::to_string(ticket_id) + " numaralı talep atandı.";
+                          std::string link = "/app/tickets/" + std::to_string(ticket_id);
+                          sqlite3_bind_int64(nst, 1, aid);
+                          sqlite3_bind_text(nst, 2, msg.c_str(), -1, SQLITE_TRANSIENT);
+                          sqlite3_bind_text(nst, 3, ts.c_str(), -1, SQLITE_TRANSIENT);
+                          sqlite3_bind_text(nst, 4, link.c_str(), -1, SQLITE_TRANSIENT);
+                          sqlite3_step(nst);
+                          sqlite3_finalize(nst);
+                        }
+                    }
+                } else {
+                    // If empty assignees, maybe unset assigned status? We'll leave it or set to open.
+                    sqlite3_stmt *st = nullptr;
+                    const char *sql = "UPDATE tickets SET updated_at = ? WHERE id = ?";
+                    if (sqlite3_prepare_v2(g_db, sql, -1, &st, nullptr) == SQLITE_OK) {
+                        sqlite3_bind_text(st, 1, ts.c_str(), -1, SQLITE_TRANSIENT);
+                        sqlite3_bind_int64(st, 2, ticket_id);
+                        sqlite3_step(st);
+                        sqlite3_finalize(st);
+                    }
                 }
 
                 sqlite3_stmt *hst = nullptr;
                 const char *hsql = "INSERT INTO ticket_history (ticket_id, user_id, action, created_at) VALUES (?, ?, ?, ?)";
                 if (sqlite3_prepare_v2(g_db, hsql, -1, &hst, nullptr) == SQLITE_OK) {
-                  std::string action = body["assignee_id"].is_null() ? "Atama Kaldırıldı" : "Yeni Personel Atandı";
+                  std::string action = new_assignees.empty() ? "Tüm Atamalar Kaldırıldı" : "Personel Atamaları Güncellendi";
                   sqlite3_bind_int64(hst, 1, ticket_id);
                   sqlite3_bind_int64(hst, 2, me->id);
                   sqlite3_bind_text(hst, 3, action.c_str(), -1, SQLITE_TRANSIENT);
@@ -884,14 +921,14 @@ int main(int argc, char **argv) {
 
     std::string sql =
         "SELECT t.id, t.user_id, t.title, t.description, t.status, t.priority, "
-        "t.assignee_id, t.photo_path, t.created_at, t.updated_at, "
-        "u.display_name AS owner_name, a.display_name AS assignee_name, "
+        "t.photo_path, t.created_at, t.updated_at, "
+        "u.display_name AS owner_name, "
         "t.rating, t.resolved_at "
         "FROM tickets t JOIN users u ON u.id = t.user_id "
-        "LEFT JOIN users a ON a.id = t.assignee_id WHERE t.id = ?";
+        "WHERE t.id = ?";
     if (me->role != "superuser" && me->role != "manager") {
       if (me->role == "support") {
-        sql += " AND t.assignee_id = ?";
+        sql += " AND t.id IN (SELECT ticket_id FROM ticket_assignees WHERE user_id = ?)";
       } else {
         sql += " AND t.user_id = ?";
       }
@@ -916,30 +953,39 @@ int main(int argc, char **argv) {
       item["status"] = reinterpret_cast<const char *>(sqlite3_column_text(st, 4));
       item["priority"] = reinterpret_cast<const char *>(sqlite3_column_text(st, 5));
       if (sqlite3_column_type(st, 6) == SQLITE_NULL)
-        item["assignee_id"] = nullptr;
-      else
-        item["assignee_id"] = sqlite3_column_int64(st, 6);
-      if (sqlite3_column_type(st, 7) == SQLITE_NULL)
         item["photo_path"] = nullptr;
       else
-        item["photo_path"] = reinterpret_cast<const char *>(sqlite3_column_text(st, 7));
-      item["created_at"] = reinterpret_cast<const char *>(sqlite3_column_text(st, 8));
-      item["updated_at"] = reinterpret_cast<const char *>(sqlite3_column_text(st, 9));
-      item["owner_name"] = reinterpret_cast<const char *>(sqlite3_column_text(st, 10));
-      if (sqlite3_column_type(st, 11) == SQLITE_NULL)
-        item["assignee_name"] = nullptr;
-      else
-        item["assignee_name"] = reinterpret_cast<const char *>(sqlite3_column_text(st, 11));
+        item["photo_path"] = reinterpret_cast<const char *>(sqlite3_column_text(st, 6));
+      item["created_at"] = reinterpret_cast<const char *>(sqlite3_column_text(st, 7));
+      item["updated_at"] = reinterpret_cast<const char *>(sqlite3_column_text(st, 8));
+      item["owner_name"] = reinterpret_cast<const char *>(sqlite3_column_text(st, 9));
         
-      if (sqlite3_column_type(st, 12) == SQLITE_NULL)
+      if (sqlite3_column_type(st, 10) == SQLITE_NULL)
         item["rating"] = nullptr;
       else
-        item["rating"] = sqlite3_column_int(st, 12);
+        item["rating"] = sqlite3_column_int(st, 10);
         
-      if (sqlite3_column_type(st, 13) == SQLITE_NULL)
+      if (sqlite3_column_type(st, 11) == SQLITE_NULL)
         item["resolved_at"] = nullptr;
       else
-        item["resolved_at"] = reinterpret_cast<const char *>(sqlite3_column_text(st, 13));
+        item["resolved_at"] = reinterpret_cast<const char *>(sqlite3_column_text(st, 11));
+
+      // Fetch assignees
+      sqlite3_stmt *ast = nullptr;
+      std::string asql = "SELECT a.user_id, u.display_name, a.is_completed FROM ticket_assignees a JOIN users u ON u.id = a.user_id WHERE a.ticket_id = ?";
+      json assignees = json::array();
+      if (sqlite3_prepare_v2(g_db, asql.c_str(), -1, &ast, nullptr) == SQLITE_OK) {
+        sqlite3_bind_int64(ast, 1, item["id"].get<int64_t>());
+        while (sqlite3_step(ast) == SQLITE_ROW) {
+            assignees.push_back({
+                {"id", sqlite3_column_int64(ast, 0)},
+                {"name", reinterpret_cast<const char *>(sqlite3_column_text(ast, 1))}, // Fix column reading index here as well
+                {"is_completed", sqlite3_column_int(ast, 2) == 1}
+            });
+        }
+        sqlite3_finalize(ast);
+      }
+      item["assignees"] = assignees;
 
       sqlite3_finalize(st);
       res.set_content(item.dump(), "application/json");
@@ -1176,6 +1222,64 @@ int main(int argc, char **argv) {
           sqlite3_finalize(nst);
         }
       }
+    }
+
+    res.status = 200;
+    res.set_content(json{{"success", true}}.dump(), "application/json");
+  });
+
+  svr.Post(R"(/api/tickets/(\d+)/complete_part)", [](const httplib::Request &req, httplib::Response &res) {
+    set_cors(res);
+    auto tok = bearer_token(req);
+    if (!tok) {
+      res.status = 401;
+      res.set_content(json{{"error", "unauthorized"}}.dump(), "application/json");
+      return;
+    }
+    auto me = user_from_token(*tok);
+    if (!me || (me->role != "support" && me->role != "manager")) {
+      res.status = 403;
+      res.set_content(json{{"error", "forbidden"}}.dump(), "application/json");
+      return;
+    }
+
+    int64_t ticket_id = std::stoll(req.matches[1]);
+    std::string ts = now_iso();
+    std::lock_guard<std::mutex> dblock(g_db_mutex);
+
+    // Verify user is assigned
+    sqlite3_stmt *chk = nullptr;
+    if (sqlite3_prepare_v2(g_db, "SELECT is_completed FROM ticket_assignees WHERE ticket_id = ? AND user_id = ?", -1, &chk, nullptr) == SQLITE_OK) {
+        sqlite3_bind_int64(chk, 1, ticket_id);
+        sqlite3_bind_int64(chk, 2, me->id);
+        if (sqlite3_step(chk) != SQLITE_ROW) {
+            sqlite3_finalize(chk);
+            res.status = 403;
+            res.set_content(json{{"error", "not_assigned"}}.dump(), "application/json");
+            return;
+        }
+        sqlite3_finalize(chk);
+    }
+
+    sqlite3_stmt *st = nullptr;
+    if (sqlite3_prepare_v2(g_db, "UPDATE ticket_assignees SET is_completed = 1 WHERE ticket_id = ? AND user_id = ?", -1, &st, nullptr) == SQLITE_OK) {
+        sqlite3_bind_int64(st, 1, ticket_id);
+        sqlite3_bind_int64(st, 2, me->id);
+        sqlite3_step(st);
+        sqlite3_finalize(st);
+    }
+
+    // Add to history
+    sqlite3_stmt *hst = nullptr;
+    const char *hsql = "INSERT INTO ticket_history (ticket_id, user_id, action, created_at) VALUES (?, ?, ?, ?)";
+    if (sqlite3_prepare_v2(g_db, hsql, -1, &hst, nullptr) == SQLITE_OK) {
+      std::string action = "Kendi görev bölümünü tamamladı";
+      sqlite3_bind_int64(hst, 1, ticket_id);
+      sqlite3_bind_int64(hst, 2, me->id);
+      sqlite3_bind_text(hst, 3, action.c_str(), -1, SQLITE_TRANSIENT);
+      sqlite3_bind_text(hst, 4, ts.c_str(), -1, SQLITE_TRANSIENT);
+      sqlite3_step(hst);
+      sqlite3_finalize(hst);
     }
 
     res.status = 200;

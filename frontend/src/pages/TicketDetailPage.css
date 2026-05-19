@@ -73,20 +73,20 @@
 
 .td-status-pill[data-status="open"] {
   border-color: #3b82f6;
-  color: #2563eb;
-  background-color: #eff6ff;
+  color: #3b82f6;
+  background-color: transparent;
 }
 
 .td-status-pill[data-status="assigned"] {
   border-color: #f59e0b;
-  color: #b45309;
-  background-color: #fffbeb;
+  color: #f59e0b;
+  background-color: transparent;
 }
 
 .td-status-pill[data-status="closed"] {
   border-color: #10b981;
-  color: #047857;
-  background-color: #ecfdf5;
+  color: #10b981;
+  background-color: transparent;
 }
 
 .td-date {

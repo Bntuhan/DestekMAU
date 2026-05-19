@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import * as api from "../api.js";
 import { PieChart, Pie, Cell, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
@@ -7,14 +8,11 @@ export default function Dashboard({ user }) {
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch("/api/analytics", {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(r => r.json())
+    api.fetchAnalytics()
       .then(d => {
         if (!d.error) setData(d);
-      });
+      })
+      .catch(err => console.error(err));
   }, []);
 
   if (!data) return <div className="p-8">Yükleniyor...</div>;
@@ -30,23 +28,23 @@ export default function Dashboard({ user }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* KPI Cards */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex flex-col items-center justify-center">
-          <h2 className="text-gray-500 mb-2">Ortalama Çözüm Süresi</h2>
+        <div className="p-6 rounded-lg shadow-sm border flex flex-col items-center justify-center" style={{ backgroundColor: 'var(--mau-card)', borderColor: 'var(--mau-border-subtle)' }}>
+          <h2 className="mb-2" style={{ color: 'var(--mau-text-muted)' }}>Ortalama Çözüm Süresi</h2>
           <div className="text-4xl font-bold text-blue-600">
             {data.mttr_hours ? data.mttr_hours.toFixed(1) + " Saat" : "Veri Yok"}
           </div>
         </div>
         
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex flex-col items-center justify-center">
-          <h2 className="text-gray-500 mb-2">Müşteri Memnuniyeti (CSAT)</h2>
+        <div className="p-6 rounded-lg shadow-sm border flex flex-col items-center justify-center" style={{ backgroundColor: 'var(--mau-card)', borderColor: 'var(--mau-border-subtle)' }}>
+          <h2 className="mb-2" style={{ color: 'var(--mau-text-muted)' }}>Müşteri Memnuniyeti (CSAT)</h2>
           <div className="text-4xl font-bold text-green-500">
             {data.avg_rating ? data.avg_rating.toFixed(1) + " / 5.0" : "Veri Yok"}
           </div>
         </div>
 
         {/* Charts */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold mb-4">Talep Durumu Dağılımı</h2>
+        <div className="p-6 rounded-lg shadow-sm border" style={{ backgroundColor: 'var(--mau-card)', borderColor: 'var(--mau-border-subtle)' }}>
+          <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--mau-text)' }}>Talep Durumu Dağılımı</h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -62,8 +60,8 @@ export default function Dashboard({ user }) {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold mb-4">Önceliğe Göre Talepler</h2>
+        <div className="p-6 rounded-lg shadow-sm border" style={{ backgroundColor: 'var(--mau-card)', borderColor: 'var(--mau-border-subtle)' }}>
+          <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--mau-text)' }}>Önceliğe Göre Talepler</h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={prioData}>

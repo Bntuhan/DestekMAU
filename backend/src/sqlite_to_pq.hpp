@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <unordered_map>
 
-typedef PGconn* sqlite3;
+typedef struct pg_conn sqlite3;
 
 #define SQLITE_OK 0
 #define SQLITE_ROW 100
@@ -15,7 +15,7 @@ typedef PGconn* sqlite3;
 #define SQLITE_NULL 5
 #define SQLITE_TRANSIENT nullptr
 
-extern std::unordered_map<sqlite3, int64_t> g_last_insert_rowid;
+extern std::unordered_map<sqlite3*, int64_t> g_last_insert_rowid;
 
 struct sqlite3_stmt {
     PGconn *conn = nullptr;
@@ -28,7 +28,7 @@ struct sqlite3_stmt {
     int num_rows = 0;
 };
 
-inline std::unordered_map<sqlite3, int64_t> g_last_insert_rowid;
+inline std::unordered_map<sqlite3*, int64_t> g_last_insert_rowid;
 
 inline int sqlite3_open(const char *conninfo, sqlite3 **ppDb) {
     *ppDb = PQconnectdb(conninfo);

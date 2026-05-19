@@ -138,3 +138,11 @@ export function fetchTicketViewers(id) {
 export function requestTicketBackup(id) {
   return api(`/api/tickets/${id}/backup`, { method: 'POST' })
 }
+
+export function fetchAnalytics() {
+  return api('/api/analytics')
+}
+
+export function completeTicketPart(id) {
+  return api(`/api/tickets/${id}/complete_part`, { method: 'POST' })
+}

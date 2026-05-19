@@ -17,7 +17,7 @@ export default function TicketDetailPage() {
   const [staff, setStaff] = useState([])
   
   // States for actions
-  const [assigneeId, setAssigneeId] = useState('')
+  const [assignees, setAssignees] = useState([])
   const [statusVal, setStatusVal] = useState('')
   const [historyActionVal, setHistoryActionVal] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
@@ -46,7 +46,7 @@ export default function TicketDetailPage() {
         const data = await api.fetchTicket(id)
         
         setTicket(data)
-        setAssigneeId(data.assignee_id || '')
+        setAssignees(data.assignees?.map(a => a.id) || [])
         setStatusVal(data.status || 'open')
         
         const hData = await api.fetchTicketHistory(id)
@@ -77,7 +77,7 @@ export default function TicketDetailPage() {
       // Refresh ticket and history
       const tData = await api.fetchTicket(id)
       setTicket(tData)
-      setAssigneeId(tData.assignee_id || '')
+      setAssignees(tData.assignees?.map(a => a.id) || [])
       setStatusVal(tData.status || 'open')
       
       const hData = await api.fetchTicketHistory(id)
@@ -89,11 +89,22 @@ export default function TicketDetailPage() {
     }
   }
 
-  function handleAssignChange(e) {
-    if (!isManager) return
-    const val = e.target.value
-    setAssigneeId(val)
-    handleUpdate({ assignee_id: val ? Number(val) : null })
+  async function handleCompletePart() {
+    setActionLoading(true)
+    try {
+      await api.completeTicketPart(id)
+      const tData = await api.fetchTicket(id)
+      setTicket(tData)
+      setAssignees(tData.assignees?.map(a => a.id) || [])
+      
+      const hData = await api.fetchTicketHistory(id)
+      setHistory(hData)
+      alert("Görev bölümünüz başarıyla tamamlandı olarak işaretlendi.")
+    } catch(err) {
+      alert("İşlem başarısız: " + err.message)
+    } finally {
+      setActionLoading(false)
+    }
   }
 
   function handleStatusChange(e) {
@@ -124,7 +135,7 @@ export default function TicketDetailPage() {
       await api.requestTicketClose(id)
       const tData = await api.fetchTicket(id)
       setTicket(tData)
-      setAssigneeId(tData.assignee_id || '')
+      setAssignees(tData.assignees?.map(a => a.id) || [])
       setStatusVal(tData.status || 'open')
       
       const hData = await api.fetchTicketHistory(id)
@@ -184,7 +195,7 @@ export default function TicketDetailPage() {
       <div className="td-grid">
         <div className="td-main">
           {viewers.length > 0 && (
-            <div style={{background: '#e0f2fe', color: '#0369a1', padding: '12px 20px', fontSize: '0.9rem', marginBottom: '1rem', borderRadius: '6px', border: '1px solid #bae6fd'}}>
+            <div style={{background: 'var(--brand-info)', color: '#fff', padding: '12px 20px', fontSize: '0.9rem', marginBottom: '1rem', borderRadius: '6px', border: '1px solid var(--brand-info)'}}>
               👁️ <strong>Şu anda bu bileti {viewers.join(', ')} de inceliyor.</strong> Lütfen çakışmalara dikkat ediniz.
             </div>
           )}
@@ -227,11 +238,11 @@ export default function TicketDetailPage() {
                 <h3>Süreç Takibi</h3>
                 <ul className="td-timeline" style={{listStyle: 'none', padding: 0, marginTop: '1rem'}}>
                   {history.map(h => (
-                    <li key={h.id} style={{padding: '0.8rem', borderLeft: '3px solid var(--brand-blue)', marginBottom: '0.5rem', background: '#f9f9fc', borderRadius: '0 4px 4px 0'}}>
-                      <div style={{fontSize: '0.85rem', color: '#666', marginBottom: '0.2rem'}}>
+                    <li key={h.id} style={{padding: '0.8rem', borderLeft: '3px solid var(--brand-blue)', marginBottom: '0.5rem', background: 'var(--mau-page-bg)', borderRadius: '0 4px 4px 0'}}>
+                      <div style={{fontSize: '0.85rem', color: 'var(--mau-text-muted)', marginBottom: '0.2rem'}}>
                         {new Date(h.created_at).toLocaleString('tr-TR')} - <strong>{h.user_name}</strong>
                       </div>
-                      <div style={{fontWeight: '500', color: '#333'}}>
+                      <div style={{fontWeight: '500', color: 'var(--mau-text)'}}>
                         {h.action}
                       </div>
                     </li>
@@ -253,7 +264,18 @@ export default function TicketDetailPage() {
                 <strong>Oluşturan:</strong> {ticket.owner_name}
               </li>
               <li>
-                <strong>Atanan Kişi:</strong> {ticket.assignee_name || <span className="unassigned">Atanmadı</span>}
+                <strong>Atanan Kişiler:</strong> 
+                {ticket.assignees && ticket.assignees.length > 0 ? (
+                  <ul style={{ paddingLeft: '20px', marginTop: '4px', marginBottom: '0' }}>
+                    {ticket.assignees.map(a => (
+                      <li key={a.id} style={{ color: a.is_completed ? 'var(--brand-success)' : 'inherit' }}>
+                        {a.name} {a.is_completed ? '✓ (Tamamlandı)' : '(Bekliyor)'}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <span className="unassigned">Atanmadı</span>
+                )}
               </li>
               <li>
                 <strong>Son Güncelleme:</strong> {new Date(ticket.updated_at).toLocaleString('tr-TR')}
@@ -267,8 +289,8 @@ export default function TicketDetailPage() {
           </div>
 
           {ticket.status === 'closed' && (
-            <div className="td-card info-card mt-4" style={{marginTop: '1rem', background: '#f8fafc', border: '1px solid #e2e8f0'}}>
-              <h3 style={{color: '#0f172a'}}>Hizmet Değerlendirmesi</h3>
+            <div className="td-card info-card mt-4" style={{marginTop: '1rem'}}>
+              <h3 style={{color: 'var(--mau-text)'}}>Hizmet Değerlendirmesi</h3>
               {ticket.rating ? (
                 <div style={{fontSize: '1.2rem', color: '#eab308'}}>
                   {'★'.repeat(ticket.rating)}{'☆'.repeat(5 - ticket.rating)} ({ticket.rating}/5)
@@ -300,7 +322,7 @@ export default function TicketDetailPage() {
                     </div>
                   </div>
                 ) : (
-                  <div style={{fontSize: '0.9rem', color: '#64748b'}}>Henüz puanlanmadı.</div>
+                  <div style={{fontSize: '0.9rem', color: 'var(--mau-text-muted)'}}>Henüz puanlanmadı.</div>
                 )
               )}
             </div>
@@ -313,17 +335,24 @@ export default function TicketDetailPage() {
               {isManager && (
                 <div className="td-action-group">
                   <label>Personel Ata</label>
-                  <div className="td-select-wrap">
-                    <select 
-                      value={assigneeId} 
-                      onChange={handleAssignChange}
-                      disabled={actionLoading}
-                    >
-                      <option value="">-- Kimseye Atanmadı --</option>
-                      {staff.map(s => (
-                        <option key={s.id} value={s.id}>{s.display_name}</option>
-                      ))}
-                    </select>
+                  <div style={{ maxHeight: '150px', overflowY: 'auto', background: 'var(--mau-page-bg)', padding: '10px', borderRadius: '4px', border: '1px solid var(--mau-border-subtle)' }}>
+                    {staff.map(s => (
+                      <label key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox"
+                          checked={assignees.includes(s.id)}
+                          onChange={(e) => {
+                             const newAssignees = e.target.checked 
+                               ? [...assignees, s.id] 
+                               : assignees.filter(id => id !== s.id);
+                             setAssignees(newAssignees);
+                             handleUpdate({ assignees: newAssignees });
+                          }}
+                          disabled={actionLoading}
+                        />
+                        <span>{s.display_name}</span>
+                      </label>
+                    ))}
                   </div>
                 </div>
               )}
@@ -344,8 +373,21 @@ export default function TicketDetailPage() {
                 </div>
               </div>
 
-              {isSupport && !isManager && ticket.status !== 'closed' && ticket.status !== 'pending_close' && (
+              {/* Check if current user is assigned and has not completed */}
+              {ticket.assignees?.some(a => a.id === user?.id && !a.is_completed) && ticket.status !== 'closed' && (
                 <div className="td-action-group" style={{marginTop: '1.5rem'}}>
+                  <button 
+                    onClick={handleCompletePart}
+                    disabled={actionLoading}
+                    style={{width: '100%', padding: '10px', background: 'var(--brand-primary)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500'}}
+                  >
+                    ✅ Kendi Kısmımı Tamamladım
+                  </button>
+                </div>
+              )}
+
+              {isSupport && !isManager && ticket.status !== 'closed' && ticket.status !== 'pending_close' && (
+                <div className="td-action-group" style={{marginTop: '1rem'}}>
                   <button 
                     onClick={handleRequestClose}
                     disabled={actionLoading}
