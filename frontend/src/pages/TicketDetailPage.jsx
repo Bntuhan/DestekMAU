@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth.jsx'
 import * as api from '../api.js'
@@ -21,7 +21,57 @@ export default function TicketDetailPage() {
   const [statusVal, setStatusVal] = useState('')
   const [historyActionVal, setHistoryActionVal] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
+  const [assigneesSaving, setAssigneesSaving] = useState(false)
+  const [assigneesError, setAssigneesError] = useState('')
   const [viewers, setViewers] = useState([])
+  const assigneesSaveTimer = useRef(null)
+  const assigneesPending = useRef(null)
+
+  function normalizeAssigneeIds(list) {
+    return [...new Set((list || []).map((id) => Number(id)).filter((id) => !Number.isNaN(id)))]
+  }
+
+  const flushAssigneesSave = useCallback(async () => {
+    const ids = assigneesPending.current
+    if (ids == null) return
+    assigneesPending.current = null
+    setAssigneesSaving(true)
+    setAssigneesError('')
+    try {
+      await api.patchTicket(id, { assignees: ids })
+      const tData = await api.fetchTicket(id)
+      setTicket(tData)
+      setAssignees(normalizeAssigneeIds(tData.assignees?.map((a) => a.id)))
+      setStatusVal(tData.status || 'open')
+      const hData = await api.fetchTicketHistory(id)
+      setHistory(hData)
+    } catch (err) {
+      setAssigneesError(err.message || 'Kayıt başarısız')
+      try {
+        const tData = await api.fetchTicket(id)
+        setAssignees(normalizeAssigneeIds(tData.assignees?.map((a) => a.id)))
+      } catch {
+        /* ignore */
+      }
+    } finally {
+      setAssigneesSaving(false)
+    }
+  }, [id])
+
+  const scheduleAssigneesSave = useCallback((ids) => {
+    assigneesPending.current = ids
+    if (assigneesSaveTimer.current) clearTimeout(assigneesSaveTimer.current)
+    assigneesSaveTimer.current = setTimeout(() => {
+      assigneesSaveTimer.current = null
+      flushAssigneesSave()
+    }, 400)
+  }, [flushAssigneesSave])
+
+  useEffect(() => {
+    return () => {
+      if (assigneesSaveTimer.current) clearTimeout(assigneesSaveTimer.current)
+    }
+  }, [])
 
   useEffect(() => {
     async function initPresence() {
@@ -46,7 +96,7 @@ export default function TicketDetailPage() {
         const data = await api.fetchTicket(id)
         
         setTicket(data)
-        setAssignees(data.assignees?.map(a => a.id) || [])
+        setAssignees(normalizeAssigneeIds(data.assignees?.map((a) => a.id)))
         setStatusVal(data.status || 'open')
         
         const hData = await api.fetchTicketHistory(id)
@@ -77,16 +127,36 @@ export default function TicketDetailPage() {
       // Refresh ticket and history
       const tData = await api.fetchTicket(id)
       setTicket(tData)
-      setAssignees(tData.assignees?.map(a => a.id) || [])
+      setAssignees(normalizeAssigneeIds(tData.assignees?.map((a) => a.id)))
       setStatusVal(tData.status || 'open')
       
       const hData = await api.fetchTicketHistory(id)
       setHistory(hData)
     } catch (err) {
-      alert('Güncelleme başarısız: ' + err.message)
+      if (err.data?.error === 'assignees_incomplete') {
+        const c = err.data.completed ?? '?'
+        const t = err.data.total ?? '?'
+        alert(`Tüm atanan personel tamamlamadan talep kapatılamaz (${c}/${t}).`)
+      } else {
+        alert('Güncelleme başarısız: ' + err.message)
+      }
+      setStatusVal(ticket?.status || 'open')
     } finally {
       setActionLoading(false)
     }
+  }
+
+  function handleAssigneeToggle(staffId) {
+    const sid = Number(staffId)
+    setAssigneesError('')
+    setAssignees((prev) => {
+      const normalized = normalizeAssigneeIds(prev)
+      const next = normalized.includes(sid)
+        ? normalized.filter((x) => x !== sid)
+        : [...new Set([...normalized, sid])]
+      scheduleAssigneesSave(next)
+      return next
+    })
   }
 
   async function handleCompletePart() {
@@ -95,13 +165,19 @@ export default function TicketDetailPage() {
       await api.completeTicketPart(id)
       const tData = await api.fetchTicket(id)
       setTicket(tData)
-      setAssignees(tData.assignees?.map(a => a.id) || [])
-      
+      setAssignees(normalizeAssigneeIds(tData.assignees?.map((a) => a.id)))
+      setStatusVal(tData.status || 'open')
       const hData = await api.fetchTicketHistory(id)
       setHistory(hData)
-      alert("Görev bölümünüz başarıyla tamamlandı olarak işaretlendi.")
+      const list = tData.assignees || []
+      const allDone = list.length > 0 && list.every((a) => a.is_completed)
+      if (tData.status === 'pending_close' && allDone) {
+        alert('Göreviniz tamamlandı. Tüm personel bitirdi — talep yönetici onayına gönderildi.')
+      } else {
+        alert('Görev bölümünüz tamamlandı olarak işaretlendi.')
+      }
     } catch(err) {
-      alert("İşlem başarısız: " + err.message)
+      alert('İşlem başarısız: ' + err.message)
     } finally {
       setActionLoading(false)
     }
@@ -109,6 +185,14 @@ export default function TicketDetailPage() {
 
   function handleStatusChange(e) {
     const val = e.target.value
+    const list = ticket?.assignees || []
+    const total = list.length
+    const completed = list.filter((a) => a.is_completed).length
+    if (val === 'closed' && isManager && total > 0 && completed < total) {
+      alert(`Tüm atanan personel tamamlamadan talep kapatılamaz (${completed}/${total}).`)
+      setStatusVal(ticket.status)
+      return
+    }
     setStatusVal(val)
     handleUpdate({ status: val })
   }
@@ -135,7 +219,7 @@ export default function TicketDetailPage() {
       await api.requestTicketClose(id)
       const tData = await api.fetchTicket(id)
       setTicket(tData)
-      setAssignees(tData.assignees?.map(a => a.id) || [])
+      setAssignees(normalizeAssigneeIds(tData.assignees?.map((a) => a.id)))
       setStatusVal(tData.status || 'open')
       
       const hData = await api.fetchTicketHistory(id)
@@ -185,6 +269,12 @@ export default function TicketDetailPage() {
   if (!ticket) return <div className="td-page error">Talep bulunamadı.</div>
 
   const pColor = ticket.priority === 'high' ? 'var(--brand-danger)' : ticket.priority === 'low' ? 'var(--brand-info)' : 'var(--brand-warning)'
+
+  const assigneeList = ticket.assignees || []
+  const assigneeTotal = assigneeList.length
+  const assigneeCompleted = assigneeList.filter((a) => a.is_completed).length
+  const allAssigneesComplete = assigneeTotal > 0 && assigneeCompleted === assigneeTotal
+  const canManagerClose = assigneeTotal === 0 || allAssigneesComplete
 
   return (
     <div className="td-page fade-in">
@@ -268,7 +358,7 @@ export default function TicketDetailPage() {
                 {ticket.assignees && ticket.assignees.length > 0 ? (
                   <ul style={{ paddingLeft: '20px', marginTop: '4px', marginBottom: '0' }}>
                     {ticket.assignees.map(a => (
-                      <li key={a.id} style={{ color: a.is_completed ? 'var(--brand-success)' : 'inherit' }}>
+                      <li key={a.id} className={a.is_completed ? 'td-assignee-done' : 'td-assignee-pending'}>
                         {a.name} {a.is_completed ? '✓ (Tamamlandı)' : '(Bekliyor)'}
                       </li>
                     ))}
@@ -331,29 +421,67 @@ export default function TicketDetailPage() {
           {(isManager || isSupport) && (
             <div className="td-card action-card">
               <h3>Yönetim İşlemleri</h3>
-              
+
+              {isManager && assigneeTotal > 0 && (
+                <div
+                  className={`td-assignee-progress${allAssigneesComplete ? ' td-assignee-progress--ready' : ''}`}
+                  role="status"
+                >
+                  <strong>
+                    Personel ilerlemesi: {assigneeCompleted}/{assigneeTotal}
+                  </strong>
+                  <div className="td-assignee-progress-bar">
+                    <div
+                      className="td-assignee-progress-fill"
+                      style={{ width: `${(assigneeCompleted / assigneeTotal) * 100}%` }}
+                    />
+                  </div>
+                  {allAssigneesComplete ? (
+                    <p>Tüm personel tamamladı. Talebi onaylayıp kapatabilirsiniz.</p>
+                  ) : (
+                    <p>{assigneeTotal - assigneeCompleted} personel henüz tamamlamadı.</p>
+                  )}
+                </div>
+              )}
+
+              {ticket.status === 'pending_close' && isManager && allAssigneesComplete && (
+                <div className="td-pending-banner">
+                  Onay bekleniyor — durumu &quot;Çözüldü / Kapalı&quot; yaparak talebi kapatabilirsiniz.
+                </div>
+              )}
+
               {isManager && (
                 <div className="td-action-group">
-                  <label>Personel Ata</label>
-                  <div style={{ maxHeight: '150px', overflowY: 'auto', background: 'var(--mau-page-bg)', padding: '10px', borderRadius: '4px', border: '1px solid var(--mau-border-subtle)' }}>
-                    {staff.map(s => (
-                      <label key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', cursor: 'pointer' }}>
-                        <input 
-                          type="checkbox"
-                          checked={assignees.includes(s.id)}
-                          onChange={(e) => {
-                             const newAssignees = e.target.checked 
-                               ? [...assignees, s.id] 
-                               : assignees.filter(id => id !== s.id);
-                             setAssignees(newAssignees);
-                             handleUpdate({ assignees: newAssignees });
-                          }}
-                          disabled={actionLoading}
-                        />
-                        <span>{s.display_name}</span>
-                      </label>
-                    ))}
+                  <span className="td-field-label">Personel Ata</span>
+                  <div className="td-assignee-list" role="group" aria-label="Personel seçimi">
+                    {staff.length === 0 ? (
+                      <p className="td-assignee-empty">Personel listesi yüklenemedi.</p>
+                    ) : null}
+                    {staff.map((s) => {
+                      const sid = Number(s.id)
+                      const selected = assignees.includes(sid)
+                      return (
+                        <button
+                          key={s.id}
+                          type="button"
+                          className={`td-assignee-option${selected ? ' is-selected' : ''}`}
+                          aria-pressed={selected}
+                          onClick={() => handleAssigneeToggle(s.id)}
+                        >
+                          <span className="td-assignee-mark" aria-hidden="true">
+                            {selected ? '✓' : ''}
+                          </span>
+                          <span>{s.display_name}</span>
+                        </button>
+                      )
+                    })}
                   </div>
+                  {assigneesSaving ? (
+                    <p className="td-assignee-saving">Kaydediliyor…</p>
+                  ) : null}
+                  {assigneesError ? (
+                    <p className="td-assignee-error">{assigneesError}</p>
+                  ) : null}
                 </div>
               )}
 
@@ -367,35 +495,52 @@ export default function TicketDetailPage() {
                   >
                     <option value="open">Açık (Open)</option>
                     <option value="assigned">Atandı (Assigned)</option>
-                    {isManager && <option value="closed">Çözüldü / Kapalı (Closed)</option>}
-                    {ticket.status === 'pending_close' && <option value="pending_close" disabled>Onay Bekliyor (Pending)</option>}
+                    {isManager && canManagerClose && (
+                      <option value="closed">Çözüldü / Kapalı (Closed)</option>
+                    )}
+                    {isManager && !canManagerClose && assigneeTotal > 0 && (
+                      <option value="closed" disabled>
+                        Kapat (önce tüm personel tamamlasın)
+                      </option>
+                    )}
+                    {ticket.status === 'pending_close' && (
+                      <option value="pending_close" disabled>Onay Bekliyor (Pending)</option>
+                    )}
                   </select>
                 </div>
               </div>
 
               {/* Check if current user is assigned and has not completed */}
-              {ticket.assignees?.some(a => a.id === user?.id && !a.is_completed) && ticket.status !== 'closed' && (
+              {ticket.assignees?.some(a => Number(a.id) === Number(user?.id) && !a.is_completed) && ticket.status !== 'closed' && (
                 <div className="td-action-group" style={{marginTop: '1.5rem'}}>
-                  <button 
+                  <button
+                    type="button"
+                    className="td-action-btn td-action-btn--primary"
                     onClick={handleCompletePart}
                     disabled={actionLoading}
-                    style={{width: '100%', padding: '10px', background: 'var(--brand-primary)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500'}}
                   >
-                    ✅ Kendi Kısmımı Tamamladım
+                    Kendi kısmımı tamamladım
                   </button>
                 </div>
               )}
 
-              {isSupport && !isManager && ticket.status !== 'closed' && ticket.status !== 'pending_close' && (
-                <div className="td-action-group" style={{marginTop: '1rem'}}>
-                  <button 
+              {isSupport && !isManager && assigneeTotal === 0 && ticket.status !== 'closed' && ticket.status !== 'pending_close' && (
+                <div className="td-action-group" style={{ marginTop: '1rem' }}>
+                  <button
+                    type="button"
+                    className="td-action-btn td-action-btn--success"
                     onClick={handleRequestClose}
                     disabled={actionLoading}
-                    style={{width: '100%', padding: '10px', background: 'var(--brand-success)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500'}}
                   >
-                    Çözüldü - Yönetici Onayına Sun
+                    Çözüldü — yönetici onayına sun
                   </button>
                 </div>
+              )}
+
+              {isSupport && !isManager && assigneeTotal > 0 && !allAssigneesComplete && (
+                <p className="td-assignee-hint">
+                  Tüm atanan personel &quot;Kendi kısmımı tamamladım&quot; dediğinde talep otomatik olarak yönetici onayına gider.
+                </p>
               )}
 
               <div className="td-action-group" style={{marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #eee'}}>
@@ -415,10 +560,11 @@ export default function TicketDetailPage() {
                       <option value="Kullanıcıdan ek bilgi bekleniyor">Kullanıcıdan ek bilgi bekleniyor</option>
                     </select>
                   </div>
-                  <button 
+                  <button
+                    type="button"
+                    className="td-action-btn td-action-btn--primary td-action-btn--compact"
                     onClick={handleAddHistory}
-                    disabled={!historyActionVal || actionLoading} 
-                    style={{padding: '0 12px', background: 'var(--brand-primary)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500'}}
+                    disabled={!historyActionVal || actionLoading}
                   >
                     Ekle
                   </button>
@@ -427,12 +573,13 @@ export default function TicketDetailPage() {
 
               {(isSupport || isManager) && (
                 <div className="td-action-group" style={{marginTop: '0.8rem'}}>
-                  <button 
+                  <button
+                    type="button"
+                    className="td-action-btn td-action-btn--danger"
                     onClick={handleBackupRequest}
                     disabled={actionLoading}
-                    style={{width: '100%', padding: '10px', background: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500'}}
                   >
-                    🚨 Ekip / Yardım Çağır
+                    Ekip / yardım çağır
                   </button>
                 </div>
               )}

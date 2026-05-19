@@ -2,7 +2,11 @@
 #include <nlohmann/json.hpp>
 #include "crypto_utils.hpp"
 
+#if DESTEK_USE_POSTGRES
 #include "sqlite_to_pq.hpp"
+#else
+#include <sqlite3.h>
+#endif
 
 #include <ctime>
 
@@ -98,6 +102,113 @@ void try_alter(const char *sql) {
   char *err = nullptr;
   sqlite3_exec(g_db, sql, nullptr, nullptr, &err);
   if (err) sqlite3_free(err);
+}
+
+struct AssigneeProgress {
+  int total = 0;
+  int completed = 0;
+};
+
+AssigneeProgress get_assignee_progress(int64_t ticket_id) {
+  AssigneeProgress p;
+  sqlite3_stmt *st = nullptr;
+  const char *sql =
+      "SELECT COUNT(*), COALESCE(SUM(CASE WHEN is_completed = 1 THEN 1 ELSE 0 END), 0) "
+      "FROM ticket_assignees WHERE ticket_id = ?";
+  if (sqlite3_prepare_v2(g_db, sql, -1, &st, nullptr) == SQLITE_OK) {
+    sqlite3_bind_int64(st, 1, ticket_id);
+    if (sqlite3_step(st) == SQLITE_ROW) {
+      p.total = sqlite3_column_int(st, 0);
+      p.completed = sqlite3_column_int(st, 1);
+    }
+    sqlite3_finalize(st);
+  }
+  return p;
+}
+
+std::string get_ticket_status(int64_t ticket_id) {
+  std::string status;
+  sqlite3_stmt *st = nullptr;
+  if (sqlite3_prepare_v2(g_db, "SELECT status FROM tickets WHERE id = ?", -1, &st,
+                         nullptr) == SQLITE_OK) {
+    sqlite3_bind_int64(st, 1, ticket_id);
+    if (sqlite3_step(st) == SQLITE_ROW) {
+      const char *t = reinterpret_cast<const char *>(sqlite3_column_text(st, 0));
+      if (t) status = t;
+    }
+    sqlite3_finalize(st);
+  }
+  return status;
+}
+
+void notify_managers_pending_close(int64_t ticket_id, const std::string &ts) {
+  sqlite3_stmt *mst = nullptr;
+  const char *msql = "SELECT id FROM users WHERE role IN ('manager', 'superuser')";
+  if (sqlite3_prepare_v2(g_db, msql, -1, &mst, nullptr) == SQLITE_OK) {
+    std::vector<int64_t> manager_ids;
+    while (sqlite3_step(mst) == SQLITE_ROW) {
+      manager_ids.push_back(sqlite3_column_int64(mst, 0));
+    }
+    sqlite3_finalize(mst);
+
+    for (int64_t mid : manager_ids) {
+      sqlite3_stmt *nst = nullptr;
+      const char *nsql =
+          "INSERT INTO notifications (user_id, message, created_at, link) VALUES (?, ?, ?, ?)";
+      if (sqlite3_prepare_v2(g_db, nsql, -1, &nst, nullptr) == SQLITE_OK) {
+        std::string msg =
+            "#" + std::to_string(ticket_id) +
+            " numaralı talepte tüm personel tamamladı — onayınız bekleniyor.";
+        std::string link = "/app/talep/" + std::to_string(ticket_id);
+        sqlite3_bind_int64(nst, 1, mid);
+        sqlite3_bind_text(nst, 2, msg.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(nst, 3, ts.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(nst, 4, link.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_step(nst);
+        sqlite3_finalize(nst);
+      }
+    }
+  }
+}
+
+void set_ticket_pending_close(int64_t ticket_id, int64_t actor_id, const std::string &ts,
+                              const std::string &history_action) {
+  sqlite3_stmt *st = nullptr;
+  const char *sql =
+      "UPDATE tickets SET status = 'pending_close', updated_at = ? WHERE id = ? AND status NOT IN "
+      "('closed', 'pending_close')";
+  if (sqlite3_prepare_v2(g_db, sql, -1, &st, nullptr) == SQLITE_OK) {
+    sqlite3_bind_text(st, 1, ts.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int64(st, 2, ticket_id);
+    sqlite3_step(st);
+    sqlite3_finalize(st);
+  }
+
+  sqlite3_stmt *hst = nullptr;
+  const char *hsql =
+      "INSERT INTO ticket_history (ticket_id, user_id, action, created_at) VALUES (?, ?, ?, ?)";
+  if (sqlite3_prepare_v2(g_db, hsql, -1, &hst, nullptr) == SQLITE_OK) {
+    sqlite3_bind_int64(hst, 1, ticket_id);
+    sqlite3_bind_int64(hst, 2, actor_id);
+    sqlite3_bind_text(hst, 3, history_action.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(hst, 4, ts.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_step(hst);
+    sqlite3_finalize(hst);
+  }
+
+  notify_managers_pending_close(ticket_id, ts);
+}
+
+void maybe_auto_pending_close(int64_t ticket_id, int64_t actor_id, const std::string &ts) {
+  AssigneeProgress p = get_assignee_progress(ticket_id);
+  if (p.total > 0 && p.completed == p.total) {
+    std::string cur = get_ticket_status(ticket_id);
+    if (cur == "open" || cur == "assigned") {
+      set_ticket_pending_close(
+          ticket_id, actor_id, ts,
+          "Tüm atanan personel görevlerini tamamladı — yönetici onayı bekleniyor");
+    }
+  }
 }
 
 void init_db(const std::string &path) {
@@ -278,8 +389,12 @@ int main(int argc, char **argv) {
   } else if (argc > 1) {
     db_path = argv[1];
   } else {
+#if DESTEK_USE_POSTGRES
     std::cerr << "DATABASE_URL environment variable is required!\n";
     return 1;
+#else
+    db_path = "destek_mau.db";
+#endif
   }
 
   if (const char* env_domain = std::getenv("FRESHDESK_DOMAIN")) {
@@ -736,6 +851,20 @@ int main(int argc, char **argv) {
                   return;
                 }
 
+                if (stv == "closed") {
+                  AssigneeProgress ap = get_assignee_progress(ticket_id);
+                  if (ap.total > 0 && ap.completed < ap.total) {
+                    res.status = 400;
+                    res.set_content(
+                        json{{"error", "assignees_incomplete"},
+                             {"completed", ap.completed},
+                             {"total", ap.total}}
+                            .dump(),
+                        "application/json");
+                    return;
+                  }
+                }
+
                 std::string extra_set = "";
                 if (stv == "closed") {
                     extra_set = ", resolved_at = '" + ts + "'";
@@ -792,14 +921,23 @@ int main(int argc, char **argv) {
                 
                 std::vector<int64_t> new_assignees;
                 for (auto& a : body["assignees"]) {
-                    new_assignees.push_back(a.get<int64_t>());
+                    if (a.is_number()) {
+                      new_assignees.push_back(a.get<int64_t>());
+                    } else if (a.is_string()) {
+                      new_assignees.push_back(std::stoll(a.get<std::string>()));
+                    }
                 }
 
                 // Delete old assignees
                 sqlite3_stmt *dst = nullptr;
                 if (sqlite3_prepare_v2(g_db, "DELETE FROM ticket_assignees WHERE ticket_id = ?", -1, &dst, nullptr) == SQLITE_OK) {
                     sqlite3_bind_int64(dst, 1, ticket_id);
-                    sqlite3_step(dst);
+                    if (sqlite3_step(dst) != SQLITE_DONE) {
+                      sqlite3_finalize(dst);
+                      res.status = 500;
+                      res.set_content(json{{"error", "assignees_delete_failed"}}.dump(), "application/json");
+                      return;
+                    }
                     sqlite3_finalize(dst);
                 }
                 
@@ -819,7 +957,12 @@ int main(int argc, char **argv) {
                         if (sqlite3_prepare_v2(g_db, "INSERT INTO ticket_assignees (ticket_id, user_id) VALUES (?, ?)", -1, &ist, nullptr) == SQLITE_OK) {
                             sqlite3_bind_int64(ist, 1, ticket_id);
                             sqlite3_bind_int64(ist, 2, aid);
-                            sqlite3_step(ist);
+                            if (sqlite3_step(ist) != SQLITE_DONE) {
+                              sqlite3_finalize(ist);
+                              res.status = 500;
+                              res.set_content(json{{"error", "assignees_insert_failed"}}.dump(), "application/json");
+                              return;
+                            }
                             sqlite3_finalize(ist);
                         }
                         
@@ -1184,56 +1327,19 @@ int main(int argc, char **argv) {
     std::string ts = now_iso();
     std::lock_guard<std::mutex> dblock(g_db_mutex);
 
-    // Update status to pending_close
-    sqlite3_stmt *st = nullptr;
-    const char *sql = "UPDATE tickets SET status = 'pending_close', updated_at = ? WHERE id = ?";
-    if (sqlite3_prepare_v2(g_db, sql, -1, &st, nullptr) != SQLITE_OK) {
-      res.status = 500;
+    AssigneeProgress ap = get_assignee_progress(ticket_id);
+    if (ap.total > 0 && ap.completed < ap.total) {
+      res.status = 400;
+      res.set_content(json{{"error", "assignees_incomplete"},
+                          {"completed", ap.completed},
+                          {"total", ap.total}}
+                         .dump(),
+                      "application/json");
       return;
     }
-    sqlite3_bind_text(st, 1, ts.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int64(st, 2, ticket_id);
-    sqlite3_step(st);
-    sqlite3_finalize(st);
 
-    // Add to history
-    sqlite3_stmt *hst = nullptr;
-    const char *hsql = "INSERT INTO ticket_history (ticket_id, user_id, action, created_at) VALUES (?, ?, ?, ?)";
-    if (sqlite3_prepare_v2(g_db, hsql, -1, &hst, nullptr) == SQLITE_OK) {
-      std::string action = "Çözüm sağlandı, yönetici onayı bekleniyor";
-      sqlite3_bind_int64(hst, 1, ticket_id);
-      sqlite3_bind_int64(hst, 2, me->id);
-      sqlite3_bind_text(hst, 3, action.c_str(), -1, SQLITE_TRANSIENT);
-      sqlite3_bind_text(hst, 4, ts.c_str(), -1, SQLITE_TRANSIENT);
-      sqlite3_step(hst);
-      sqlite3_finalize(hst);
-    }
-
-    // Send notifications to managers and superusers
-    sqlite3_stmt *mst = nullptr;
-    const char *msql = "SELECT id FROM users WHERE role IN ('manager', 'superuser')";
-    if (sqlite3_prepare_v2(g_db, msql, -1, &mst, nullptr) == SQLITE_OK) {
-      std::vector<int64_t> manager_ids;
-      while (sqlite3_step(mst) == SQLITE_ROW) {
-        manager_ids.push_back(sqlite3_column_int64(mst, 0));
-      }
-      sqlite3_finalize(mst);
-
-      for (int64_t mid : manager_ids) {
-        sqlite3_stmt *nst = nullptr;
-        const char *nsql = "INSERT INTO notifications (user_id, message, created_at, link) VALUES (?, ?, ?, ?)";
-        if (sqlite3_prepare_v2(g_db, nsql, -1, &nst, nullptr) == SQLITE_OK) {
-          std::string msg = "#" + std::to_string(ticket_id) + " numaralı bilette çözüm onayı bekleniyor.";
-          std::string link = "/app/tickets/" + std::to_string(ticket_id);
-          sqlite3_bind_int64(nst, 1, mid);
-          sqlite3_bind_text(nst, 2, msg.c_str(), -1, SQLITE_TRANSIENT);
-          sqlite3_bind_text(nst, 3, ts.c_str(), -1, SQLITE_TRANSIENT);
-          sqlite3_bind_text(nst, 4, link.c_str(), -1, SQLITE_TRANSIENT);
-          sqlite3_step(nst);
-          sqlite3_finalize(nst);
-        }
-      }
-    }
+    set_ticket_pending_close(ticket_id, me->id, ts,
+                             "Çözüm sağlandı, yönetici onayı bekleniyor");
 
     res.status = 200;
     res.set_content(json{{"success", true}}.dump(), "application/json");
@@ -1292,6 +1398,8 @@ int main(int argc, char **argv) {
       sqlite3_step(hst);
       sqlite3_finalize(hst);
     }
+
+    maybe_auto_pending_close(ticket_id, me->id, ts);
 
     res.status = 200;
     res.set_content(json{{"success", true}}.dump(), "application/json");

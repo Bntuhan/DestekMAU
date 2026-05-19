@@ -29,15 +29,25 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(jwt-cpp)
 
-find_package(PostgreSQL REQUIRED)
+option(DESTEK_USE_POSTGRES "PostgreSQL (Supabase) veritabanı kullan" OFF)
+
 find_package(OpenSSL REQUIRED)
 
 add_executable(destek_api src/main.cpp)
 target_include_directories(destek_api PRIVATE ${httplib_SOURCE_DIR})
-target_link_libraries(destek_api PRIVATE 
-    nlohmann_json::nlohmann_json 
-    PostgreSQL::PostgreSQL 
-    jwt-cpp::jwt-cpp 
-    OpenSSL::SSL 
+
+if(DESTEK_USE_POSTGRES)
+  find_package(PostgreSQL REQUIRED)
+  target_compile_definitions(destek_api PRIVATE DESTEK_USE_POSTGRES=1)
+  target_link_libraries(destek_api PRIVATE PostgreSQL::PostgreSQL)
+else()
+  find_package(SQLite3 REQUIRED)
+  target_link_libraries(destek_api PRIVATE SQLite::SQLite3)
+endif()
+
+target_link_libraries(destek_api PRIVATE
+    nlohmann_json::nlohmann_json
+    jwt-cpp::jwt-cpp
+    OpenSSL::SSL
     OpenSSL::Crypto
 )
