@@ -539,7 +539,7 @@ int main(int argc, char **argv) {
         while (sqlite3_step(ast) == SQLITE_ROW) {
             assignees.push_back({
                 {"id", sqlite3_column_int64(ast, 0)},
-                {"name", reinterpret_cast<const char *>(sqlite3_column_text(st, 1))},
+                {"name", reinterpret_cast<const char *>(sqlite3_column_text(ast, 1))},
                 {"is_completed", sqlite3_column_int(ast, 2) == 1}
             });
         }
