@@ -14,7 +14,7 @@ WORKDIR /app
 COPY . .
 
 WORKDIR /app/build
-RUN cmake -DCMAKE_BUILD_TYPE=Release .. && make
+RUN cmake -DCMAKE_BUILD_TYPE=Release -DDESTEK_USE_POSTGRES=ON .. && make
 
 FROM alpine:3.18
 RUN apk add --no-cache libgcc libstdc++ libpq openssl libcurl
