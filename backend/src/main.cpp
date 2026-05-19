@@ -105,7 +105,6 @@ void init_db(const std::string &path) {
     throw std::runtime_error("sqlite3_open failed");
   }
   db_exec(R"SQL(
-    PRAGMA foreign_keys = ON;
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       email TEXT NOT NULL UNIQUE,
@@ -148,6 +147,17 @@ void init_db(const std::string &path) {
       link TEXT,
       FOREIGN KEY(user_id) REFERENCES users(id)
     );
+    CREATE TABLE IF NOT EXISTS ticket_assignees (
+      ticket_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      is_completed INTEGER DEFAULT 0,
+      FOREIGN KEY(ticket_id) REFERENCES tickets(id),
+      FOREIGN KEY(user_id) REFERENCES users(id),
+      PRIMARY KEY(ticket_id, user_id)
+    );
+  )SQL");
+
+  try_alter(R"SQL(
     CREATE TABLE IF NOT EXISTS ticket_assignees (
       ticket_id INTEGER NOT NULL,
       user_id INTEGER NOT NULL,
