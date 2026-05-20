@@ -40,7 +40,7 @@ export default function AssignPage() {
     setAssigning(ticketId)
     setErr('')
     try {
-      const body = assigneeId === '' ? { assignee_id: null } : { assignee_id: Number(assigneeId) }
+      const body = assigneeId === '' ? { assignees: [] } : { assignees: [Number(assigneeId)] }
       await api.patchTicket(ticketId, body)
       await load()
     } catch (e) {
@@ -100,7 +100,7 @@ export default function AssignPage() {
               </tr>
             ) : null}
             {tickets.map((t) => {
-              const currentVal = t.assignee_id ?? ''
+              const currentVal = t.assignees && t.assignees.length > 0 ? String(t.assignees[0].id) : ''
               const draftVal = draftAssignee[t.id] ?? currentVal
               const hasDraft = draftAssignee[t.id] !== undefined && draftAssignee[t.id] !== String(currentVal)
 

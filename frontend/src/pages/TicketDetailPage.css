@@ -266,6 +266,11 @@
   line-height: 1;
   color: #fff;
   background: transparent;
+  pointer-events: none;
+}
+
+.td-assignee-option > span:not(.td-assignee-mark) {
+  pointer-events: none;
 }
 
 .td-assignee-option.is-selected .td-assignee-mark {
