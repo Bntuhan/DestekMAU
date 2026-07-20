@@ -1,0 +1,129 @@
+/* ── Analiz Paneli Ana Sarmalayıcı ── */
+.dash-analytics {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* ── Yükleniyor ── */
+.dash-analytics-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  min-height: 300px;
+  color: var(--mau-text-muted);
+  font-size: 0.9rem;
+}
+
+.dash-analytics-spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid var(--mau-border-subtle);
+  border-top-color: var(--mau-magenta);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Başlık ── */
+.dash-analytics-header {
+  margin-bottom: 2rem;
+}
+
+.dash-analytics-title {
+  margin: 0 0 0.3rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--mau-text);
+  letter-spacing: -0.02em;
+}
+
+.dash-analytics-subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--mau-text-muted);
+}
+
+/* ── KPI Kartları ── */
+.dash-analytics-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.dash-kpi-card {
+  background: var(--mau-card);
+  border: 1px solid var(--mau-border-subtle);
+  border-radius: var(--mau-radius-lg);
+  padding: 1.5rem 1.75rem;
+  box-shadow: var(--mau-shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.dash-kpi-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.dash-kpi-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--mau-text-muted);
+}
+
+.dash-kpi-value {
+  font-size: 2.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.dash-kpi-value--blue  { color: #0ea5e9; }
+.dash-kpi-value--green { color: #10b981; }
+
+.dash-kpi-desc {
+  font-size: 0.75rem;
+  color: var(--mau-text-muted);
+  margin-top: 0.1rem;
+}
+
+/* ── Grafik Kartları ── */
+.dash-analytics-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.25rem;
+}
+
+.dash-chart-card {
+  background: var(--mau-card);
+  border: 1px solid var(--mau-border-subtle);
+  border-radius: var(--mau-radius-lg);
+  padding: 1.5rem 1.75rem;
+  box-shadow: var(--mau-shadow-card);
+}
+
+.dash-chart-title {
+  margin: 0 0 1.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--mau-text);
+}
+
+.dash-chart-area {
+  height: 260px;
+}
+
+@media (max-width: 640px) {
+  .dash-analytics-title { font-size: 1.4rem; }
+  .dash-kpi-value { font-size: 1.75rem; }
+  .dash-chart-area { height: 220px; }
+}

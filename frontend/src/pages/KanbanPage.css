@@ -1,0 +1,181 @@
+.kanban-page {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 60px);
+  padding: 1rem 2rem;
+}
+
+.kanban-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.kanban-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--mau-text);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.kanban-error {
+  background: var(--brand-danger);
+  color: #fff;
+  padding: 1rem;
+  border-radius: var(--mau-radius-md);
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.kanban-board {
+  display: flex;
+  gap: 1.5rem;
+  flex: 1;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+}
+
+.kanban-column {
+  flex: 1;
+  min-width: 320px;
+  background: var(--mau-page-bg);
+  border: 1px solid var(--mau-border-subtle);
+  border-radius: var(--mau-radius-lg);
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.kanban-column-over {
+  border-color: var(--mau-magenta);
+  background: rgba(var(--mau-magenta-rgb), 0.05);
+  border-style: dashed;
+}
+
+.kanban-column-header {
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--mau-border-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.kanban-column-header h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--mau-text);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.kanban-count {
+  background: var(--mau-border-subtle);
+  color: var(--mau-text-secondary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+}
+
+.kanban-column-body {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ─── Ticket Card Styles (assuming standard classes from StreamPage or custom kb-card) ─── */
+.kb-card {
+  background: var(--mau-card);
+  border: 1px solid var(--mau-border-subtle);
+  border-radius: var(--mau-radius-md);
+  padding: 1.25rem;
+  cursor: grab;
+  box-shadow: var(--mau-shadow-card);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kb-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--mau-shadow-lifted);
+}
+
+.kb-card:active {
+  cursor: grabbing;
+}
+
+.kb-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.kb-card__id {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--mau-text-muted);
+}
+
+.kb-priority {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--mau-radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.kb-priority--high {
+  background: rgba(220, 38, 38, 0.1);
+  color: var(--brand-danger);
+}
+
+.kb-priority--normal {
+  background: rgba(217, 119, 6, 0.1);
+  color: var(--brand-warning);
+}
+
+.kb-priority--low {
+  background: rgba(5, 150, 105, 0.1);
+  color: var(--brand-success);
+}
+
+.kb-card__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--mau-text);
+  margin: 0 0 1rem 0;
+  line-height: 1.4;
+}
+
+.kb-card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--mau-text-secondary);
+}
+
+.kb-icon {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+  margin-right: 4px;
+  vertical-align: -2px;
+}
+
+@media (max-width: 900px) {
+  .kanban-board {
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+  .kanban-column {
+    min-height: 300px;
+  }
+}

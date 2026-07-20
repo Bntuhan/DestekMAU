@@ -1,0 +1,110 @@
+.onboarding-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  pointer-events: none; /* Let clicks pass through to elements not blocked by tooltip */
+}
+
+.tour-highlight {
+  position: relative;
+  z-index: 10000;
+  box-shadow: 0 0 0 4px var(--mau-magenta), 0 0 15px rgba(189, 31, 89, 0.5);
+  border-radius: var(--mau-radius-sm);
+  background: var(--mau-surface) !important;
+  transition: all 0.3s ease;
+  pointer-events: auto;
+}
+
+.onboarding-tooltip {
+  position: absolute;
+  width: 300px;
+  background: var(--mau-card-bg);
+  border: 1px solid var(--mau-border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  z-index: 10001;
+  pointer-events: auto;
+  border-radius: var(--mau-radius-md);
+  padding: 1rem;
+  transition: top 0.4s ease, left 0.4s ease, transform 0.4s ease;
+  animation: floatIn 0.4s ease-out;
+}
+
+.onboarding-tooltip::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -8px;
+  transform: translateY(-50%);
+  border-width: 8px 8px 8px 0;
+  border-style: solid;
+  border-color: transparent var(--mau-card-bg) transparent transparent;
+  filter: drop-shadow(-1px 0px 0px var(--mau-border));
+}
+
+.onboarding-tooltip--center::before {
+  display: none;
+}
+
+.onboarding-tooltip__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.onboarding-tooltip__header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--mau-text);
+}
+
+.onboarding-tooltip__progress {
+  font-size: 0.8rem;
+  color: var(--mau-text-muted);
+}
+
+.onboarding-tooltip__content {
+  font-size: 0.95rem;
+  color: var(--mau-text-secondary);
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.onboarding-tooltip__footer {
+  display: flex;
+  justify-content: space-between;
+}
+
+.onboarding-tooltip__footer .mau-btn {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+@keyframes floatIn {
+  from {
+    opacity: 0;
+    transform: translateY(-40%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%);
+  }
+}
+
+.onboarding-tooltip--center {
+  animation: floatInCenter 0.4s ease-out;
+}
+
+@keyframes floatInCenter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -40%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}

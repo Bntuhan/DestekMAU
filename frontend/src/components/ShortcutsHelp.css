@@ -1,0 +1,81 @@
+.shortcuts-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.shortcuts-modal-content {
+  background: var(--mau-card);
+  border: 1px solid var(--mau-border-subtle);
+  border-radius: var(--mau-radius, 12px);
+  padding: 1.5rem;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  color: var(--mau-text);
+}
+
+.shortcuts-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.shortcuts-modal-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.shortcuts-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--mau-text-muted);
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+.shortcuts-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.shortcut-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--mau-border-subtle);
+}
+
+.shortcut-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.shortcut-keys {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+kbd {
+  background: var(--mau-surface);
+  border: 1px solid var(--mau-border-subtle);
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: var(--mau-text);
+  box-shadow: 0 2px 0 var(--mau-border-subtle);
+}

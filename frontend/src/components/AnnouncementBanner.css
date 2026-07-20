@@ -1,0 +1,90 @@
+.announcement-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+.announcement-banner {
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+  border: 1px solid #fde68a;
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  color: #92400e;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  position: relative;
+  animation: slideDownFade 0.4s ease-out;
+}
+
+.dark .announcement-banner {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
+  border-color: rgba(245, 158, 11, 0.3);
+  border-left-color: #f59e0b;
+  color: #fcd34d;
+}
+
+.announcement-icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  color: #f59e0b;
+}
+
+.announcement-content {
+  flex-grow: 1;
+}
+
+.announcement-title {
+  display: block;
+  font-size: 1.05rem;
+  margin-bottom: 0.25rem;
+}
+
+.announcement-body {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.announcement-meta {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.announcement-close {
+  background: transparent;
+  border: none;
+  color: currentColor;
+  opacity: 0.6;
+  cursor: pointer;
+  padding: 0.25rem;
+  transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.announcement-close:hover {
+  opacity: 1;
+}
+
+.announcement-close svg {
+  width: 20px;
+  height: 20px;
+}
+
+@keyframes slideDownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

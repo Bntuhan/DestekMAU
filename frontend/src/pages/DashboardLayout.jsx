@@ -4,6 +4,12 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../auth.jsx'
 import * as api from '../api.js'
 import { useSettings, useTranslation } from '../settings.jsx'
+import { playSound, isSoundEnabled, toggleSound } from '../utils/sound.js'
+import CommandPalette from '../components/CommandPalette.jsx'
+import { useSessionTimeout } from '../hooks/useSessionTimeout.js'
+import ShortcutsHelp from '../components/ShortcutsHelp.jsx'
+import AnnouncementBanner from '../components/AnnouncementBanner.jsx'
+import OnboardingTour from '../components/OnboardingTour.jsx'
 import './DashboardLayout.css'
 
 function IconTickets() {
@@ -52,10 +58,17 @@ export default function DashboardLayout() {
   const { theme, setTheme, lang, setLang } = useSettings()
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const [soundOn, setSoundOn] = useState(isSoundEnabled())
   
   const [notifications, setNotifications] = useState([])
   const [showNotifications, setShowNotifications] = useState(false)
   const [toasts, setToasts] = useState([])
+  
+  const [cmdOpen, setCmdOpen] = useState(false)
+  const [cmdTickets, setCmdTickets] = useState([])
+
+  const { showWarning, countdown, resetTimer } = useSessionTimeout()
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
 
   useEffect(() => {
     async function fetchNotifs() {
@@ -82,16 +95,16 @@ export default function DashboardLayout() {
       }
     }
     fetchNotifs()
-    fetchNotifs()
     const intv = setInterval(fetchNotifs, 30000) // Lower back up to 30s as SSE handles realtime
     
     // Server-Sent Events (SSE) Dinleyicisi
-    const token = localStorage.getItem("token")
+    const token = localStorage.getItem("destek_token")
     let source = null
     if (token) {
         source = new EventSource(`/api/stream?token=${token}`)
         
         const notifySSE = (msg, link) => {
+           playSound('notify')
            setToasts(ts => {
              const toastId = Math.random().toString(36).substring(2, 9)
              setTimeout(() => setToasts(t => t.filter(x => x.id !== toastId)), 7000)
@@ -101,16 +114,40 @@ export default function DashboardLayout() {
         }
 
         source.addEventListener("ticket_created", (e) => {
-            notifySSE("Yeni talep oluşturuldu: #" + e.data, `/app/talep/${e.data}`)
+            notifySSE("🎫 Yeni talep oluşturuldu: #" + e.data, `/app/talep/${e.data}`)
         })
         source.addEventListener("ticket_closed", (e) => {
-            notifySSE("Talebiniz kapatıldı: #" + e.data, `/app/talep/${e.data}`)
+            notifySSE("✅ Talebiniz kapatıldı: #" + e.data, `/app/talep/${e.data}`)
+        })
+        source.addEventListener("ticket_comment", (e) => {
+            notifySSE("💬 Talep #" + e.data + " için yeni yorum", `/app/talep/${e.data}`)
         })
     }
     
+    // CommandPalette listener
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setCmdOpen(prev => {
+          if (!prev) {
+            // Load tickets when opening
+            api.fetchTickets('all').then(data => {
+              if (Array.isArray(data)) setCmdTickets(data)
+            }).catch(() => {})
+          }
+          return !prev
+        })
+      }
+      if (e.key === '?' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+        setShortcutsOpen(true)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+
     return () => {
         clearInterval(intv)
         if (source) source.close()
+        window.removeEventListener('keydown', handleKeyDown)
     }
   }, [])
 
@@ -163,14 +200,14 @@ export default function DashboardLayout() {
                   )}
                 </button>
                 {showNotifications && (
-                  <div style={{position: 'absolute', top: '120%', right: 0, width: '280px', maxHeight: '350px', overflowY: 'auto', background: 'white', border: '1px solid #eaeaea', borderRadius: '8px', zIndex: 100, boxShadow: '0 8px 24px rgba(0,0,0,0.12)'}}>
-                    <h4 style={{padding: '12px 16px', margin: 0, borderBottom: '1px solid #eaeaea', fontSize: '0.9rem', color: '#333'}}>Bildirimler</h4>
+                  <div className="notif-dropdown">
+                    <h4 className="notif-dropdown__title">Bildirimler</h4>
                     {notifications.length === 0 ? (
-                      <div style={{padding: '16px', color: '#666', fontSize: '0.85rem', textAlign: 'center'}}>Yeni bildirim yok.</div>
+                      <div className="notif-dropdown__empty">Yeni bildirim yok.</div>
                     ) : notifications.map(n => (
-                      <div key={n.id} onClick={() => handleRead(n.id, n.link)} style={{padding: '12px 16px', borderBottom: '1px solid #f5f5f5', backgroundColor: n.is_read ? 'white' : '#f0f8ff', cursor: 'pointer'}}>
-                        <div style={{color: n.is_read ? '#555' : '#222', fontSize: '0.85rem', lineHeight: '1.4'}}>{n.message}</div>
-                        <div style={{fontSize: '0.7rem', color: '#999', marginTop: '6px'}}>{new Date(n.created_at).toLocaleString('tr-TR')}</div>
+                      <div key={n.id} onClick={() => handleRead(n.id, n.link)} className={`notif-item${n.is_read ? '' : ' notif-item--unread'}`}>
+                        <div className="notif-item__message">{n.message}</div>
+                        <div className="notif-item__date">{new Date(n.created_at).toLocaleString('tr-TR')}</div>
                       </div>
                     ))}
                   </div>
@@ -180,21 +217,29 @@ export default function DashboardLayout() {
           </div>
         </div>
         <nav className="dash-nav">
-          <NavLink to="/app" end className="dash-nav-link">
+          <NavLink to="/app" end className="dash-nav-link" id="nav-tickets">
             <IconTickets />
             {t.tickets}
           </NavLink>
           {!isSupport && (
-            <NavLink to="/app/yeni-talep" className="dash-nav-link">
+            <NavLink to="/app/yeni-talep" className="dash-nav-link" id="nav-new-ticket">
               <IconPlus />
               {t.newTicket}
             </NavLink>
           )}
           {isManager ? (
             <>
-              <NavLink to="/app/dashboard" className="dash-nav-link">
+              <NavLink to="/app/dashboard" className="dash-nav-link" id="nav-analysis">
                 <IconDashboard />
                 Analiz
+              </NavLink>
+              <NavLink to="/app/kanban" className="dash-nav-link" id="nav-kanban">
+                <svg className="dash-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+                  <rect x="3" y="3" width="5" height="18" rx="1"/>
+                  <rect x="10" y="3" width="5" height="12" rx="1"/>
+                  <rect x="17" y="3" width="5" height="15" rx="1"/>
+                </svg>
+                Kanban
               </NavLink>
               <NavLink to="/app/kullanici-ekle" className="dash-nav-link">
                 <IconAddUser />
@@ -206,13 +251,47 @@ export default function DashboardLayout() {
               </NavLink>
             </>
           ) : null}
+          <NavLink to="/app/profil" className="dash-nav-link">
+            <svg className="dash-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+              <circle cx="12" cy="8" r="4"/>
+              <path strokeLinecap="round" d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+            </svg>
+            Profil
+          </NavLink>
+          <NavLink to="/app/faq" className="dash-nav-link">
+            <svg className="dash-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+              <circle cx="12" cy="12" r="10"/>
+              <path strokeLinecap="round" d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/>
+            </svg>
+            SSS
+          </NavLink>
+          {isManager ? (
+            <>
+              <NavLink to="/app/duyurular" className="dash-nav-link">
+                <svg className="dash-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
+                </svg>
+                Duyurular
+              </NavLink>
+              <NavLink to="/app/audit-log" className="dash-nav-link">
+                <svg className="dash-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                Denetim Günlüğü
+              </NavLink>
+            </>
+          ) : null}
         </nav>
         <div className="dash-sidebar-footer">
-          <button type="button" className="dash-nav-link" style={{background:'transparent', border:0, color:'inherit', cursor:'pointer', padding:'8px 12px', width:'100%', textAlign:'left', display:'flex', alignItems:'center', gap:'12px'}} onClick={toggleTheme}>
+          <button type="button" className="dash-nav-link dash-footer-btn" onClick={toggleTheme}>
             {theme === 'light' ? '🌙' : '☀️'}
             <span>{t.themeToggle}</span>
           </button>
-          <button type="button" className="dash-nav-link" style={{background:'transparent', border:0, color:'inherit', cursor:'pointer', padding:'8px 12px', width:'100%', textAlign:'left', display:'flex', alignItems:'center', gap:'12px', marginBottom:'16px'}} onClick={toggleLang}>
+          <button type="button" className="dash-nav-link dash-footer-btn" onClick={() => { const v = toggleSound(); setSoundOn(v) }}>
+            {soundOn ? '🔔' : '🔕'}
+            <span>{soundOn ? 'Ses Açık' : 'Ses Kapalı'}</span>
+          </button>
+          <button type="button" className="dash-nav-link dash-footer-btn" onClick={toggleLang}>
             🌍
             <span>{t.langToggle}</span>
           </button>
@@ -224,34 +303,42 @@ export default function DashboardLayout() {
       </aside>
       <main className="dash-main">
         <div className="dash-main-inner">
+          <AnnouncementBanner />
           <Outlet />
         </div>
 
         {/* Toasts Container */}
-        <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 9999, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {toasts.map(t => (
-            <div 
-              key={t.id} 
-              style={{
-                background: 'white', 
-                borderLeft: '4px solid var(--brand-primary)', 
-                padding: '16px 20px', 
-                borderRadius: '6px', 
-                boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
-                minWidth: '300px',
-                maxWidth: '400px',
-                animation: 'slideInRight 0.3s ease-out forwards',
-                cursor: t.link ? 'pointer' : 'default'
-              }}
-              onClick={() => {
-                if (t.link) navigate(t.link)
-              }}
+        <div className="toast-container">
+          {toasts.map(toast => (
+            <div
+              key={toast.id}
+              className={`toast-item${toast.link ? ' toast-item--clickable' : ''}`}
+              onClick={() => { if (toast.link) navigate(toast.link) }}
+              role="alert"
+              aria-live="polite"
             >
-              <div style={{fontWeight: 'bold', fontSize: '0.85rem', color: '#666', marginBottom: '6px'}}>YENİ BİLDİRİM</div>
-              <div style={{fontSize: '0.95rem', color: '#222'}}>{t.message}</div>
+              <div className="toast-label">YENİ BİLDİRİM</div>
+              <div className="toast-message">{toast.message}</div>
             </div>
           ))}
         </div>
+
+        <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} tickets={cmdTickets} />
+        
+        {showWarning && (
+          <div className="session-warning-overlay">
+            <div className="session-warning-modal">
+              <h2>Oturum Zaman Aşımı</h2>
+              <p>Uzun süredir işlem yapmadınız. Oturumunuz kapanmak üzere.</p>
+              <div className="session-warning-countdown">{countdown}</div>
+              <button className="mau-btn mau-btn--primary" onClick={resetTimer}>Devam Et</button>
+            </div>
+          </div>
+        )}
+        
+        
+        <ShortcutsHelp open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
+        <OnboardingTour />
       </main>
     </div>
   )

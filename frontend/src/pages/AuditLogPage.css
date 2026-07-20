@@ -1,0 +1,140 @@
+.audit-log-page {
+  padding: 1rem;
+}
+
+.al-header {
+  margin-bottom: 2rem;
+}
+
+.al-header h1 {
+  font-size: 2rem;
+  color: var(--mau-text);
+  margin-bottom: 0.5rem;
+}
+
+.al-header p {
+  color: var(--mau-text-muted);
+}
+
+.al-card {
+  background: var(--mau-card-bg);
+  border: 1px solid var(--mau-border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+}
+
+.al-controls {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--mau-border);
+  background: var(--mau-page-bg);
+}
+
+.al-search {
+  width: 100%;
+  max-width: 400px;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--mau-border);
+  background: var(--mau-card-bg);
+  color: var(--mau-text);
+}
+
+.al-search:focus {
+  outline: none;
+  border-color: var(--brand-primary);
+}
+
+.al-table-container {
+  overflow-x: auto;
+}
+
+.al-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.al-table th {
+  padding: 1rem 1.5rem;
+  background: var(--mau-page-bg);
+  color: var(--mau-text-muted);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--mau-border);
+}
+
+.al-table td {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--mau-border);
+  color: var(--mau-text);
+  font-size: 0.95rem;
+}
+
+.al-table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.al-table tbody tr:hover {
+  background-color: var(--mau-hover-bg, rgba(0,0,0,0.02));
+}
+
+.al-table tbody tr:nth-child(even) {
+  background-color: var(--mau-page-bg);
+}
+
+.dark .al-table tbody tr:nth-child(even) {
+  background-color: rgba(255,255,255,0.02);
+}
+
+.dark .al-table tbody tr:hover {
+  background-color: rgba(255,255,255,0.05);
+}
+
+.al-date {
+  white-space: nowrap;
+  color: var(--mau-text-muted) !important;
+}
+
+.al-user {
+  font-weight: 500;
+}
+
+.al-detail {
+  max-width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.al-ip {
+  font-family: monospace;
+  color: var(--mau-text-muted) !important;
+}
+
+.al-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.al-badge-success { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
+.al-badge-danger { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+.al-badge-warning { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+.al-badge-primary { background: rgba(59, 130, 246, 0.1); color: #2563eb; }
+.al-badge-default { background: var(--mau-border); color: var(--mau-text); }
+
+.dark .al-badge-success { color: #4ade80; }
+.dark .al-badge-danger { color: #f87171; }
+.dark .al-badge-warning { color: #fbbf24; }
+.dark .al-badge-primary { color: #60a5fa; }
+
+.al-message {
+  padding: 2rem;
+  text-align: center;
+  color: var(--mau-text-muted);
+}

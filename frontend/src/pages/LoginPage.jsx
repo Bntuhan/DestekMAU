@@ -50,7 +50,12 @@ export default function LoginPage() {
       await signIn(email.trim(), password)
       navigate('/app', { replace: true })
     } catch (err) {
-      setError(err.message || 'Giriş yapılamadı')
+      if (err.data?.error === 'account_locked') {
+        const mins = err.data.minutes_remaining || 15
+        setError(`Çok fazla başarısız deneme! Hesabınız ${mins} dakika süreyle kilitlendi.`)
+      } else {
+        setError(err.message || 'Giriş yapılamadı')
+      }
     } finally {
       setLoading(false)
     }

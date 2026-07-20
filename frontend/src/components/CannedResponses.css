@@ -1,0 +1,101 @@
+.canned-responses {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 0.5rem;
+}
+
+.canned-responses-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--mau-card);
+  color: var(--mau-text);
+  border: 1px solid var(--mau-border);
+  padding: 6px 12px;
+  border-radius: var(--mau-radius-md, 6px);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.canned-responses-btn:hover {
+  background-color: var(--mau-page-bg);
+  border-color: var(--mau-primary, var(--brand-blue, #0ea5e9));
+}
+
+.canned-responses-popover {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 8px;
+  width: 320px;
+  background-color: var(--mau-card);
+  border: 1px solid var(--mau-border);
+  border-radius: var(--mau-radius-lg, 8px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: fadeInDown 0.2s ease-out;
+}
+
+.canned-responses-search {
+  padding: 10px;
+  border-bottom: 1px solid var(--mau-border-subtle, var(--mau-border));
+}
+
+.canned-responses-search input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--mau-border);
+  border-radius: var(--mau-radius-md, 4px);
+  background-color: var(--mau-page-bg);
+  color: var(--mau-text);
+  font-size: 0.9rem;
+}
+
+.canned-responses-search input:focus {
+  outline: none;
+  border-color: var(--brand-blue, #0ea5e9);
+}
+
+.canned-responses-list {
+  max-height: 250px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.canned-responses-item {
+  text-align: left;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--mau-border-subtle, var(--mau-border));
+  padding: 12px;
+  font-size: 0.85rem;
+  color: var(--mau-text);
+  cursor: pointer;
+  transition: background-color 0.15s;
+  line-height: 1.4;
+}
+
+.canned-responses-item:last-child {
+  border-bottom: none;
+}
+
+.canned-responses-item:hover {
+  background-color: var(--mau-page-bg);
+}
+
+.canned-responses-empty {
+  padding: 12px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--mau-text-muted);
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}

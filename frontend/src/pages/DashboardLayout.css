@@ -98,16 +98,17 @@
   color: #fff;
 }
 
-/* Aktif öğe = Blackboard mürdüm vurgu */
+/* Aktif öğe = magenta vurgu + sol çizgi */
 .dash-nav-link.active {
-  background: var(--mau-magenta);
+  background: rgba(var(--mau-magenta-rgb), 0.18);
   color: #fff;
-  box-shadow: none;
+  box-shadow: inset 3px 0 0 var(--mau-magenta);
   font-weight: 600;
 }
 
 .dash-nav-link.active .dash-nav-icon {
   opacity: 1;
+  color: var(--mau-magenta-light);
 }
 
 .dash-sidebar-footer {
@@ -195,4 +196,187 @@
     width: 100%;
     padding-top: 0.75rem;
   }
+}
+
+/* ── Bildirim Dropdown ── */
+.notif-dropdown {
+  position: absolute;
+  top: 120%;
+  right: 0;
+  width: 300px;
+  max-height: 370px;
+  overflow-y: auto;
+  background: var(--mau-card);
+  border: 1px solid var(--mau-border-subtle);
+  border-radius: 10px;
+  z-index: 200;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.notif-dropdown__title {
+  padding: 12px 16px;
+  margin: 0;
+  border-bottom: 1px solid var(--mau-border-subtle);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--mau-text);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.notif-dropdown__empty {
+  padding: 20px 16px;
+  color: var(--mau-text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.notif-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--mau-border-subtle);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.notif-item:last-child {
+  border-bottom: none;
+}
+
+.notif-item:hover {
+  background: var(--mau-sidebar-hover);
+}
+
+.notif-item--unread {
+  background: rgba(var(--mau-magenta-rgb), 0.08);
+}
+
+.notif-item--unread:hover {
+  background: rgba(var(--mau-magenta-rgb), 0.14);
+}
+
+.notif-item__message {
+  color: var(--mau-text);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  font-weight: 500;
+}
+
+.notif-item--unread .notif-item__message {
+  color: var(--mau-text);
+  font-weight: 600;
+}
+
+.notif-item__date {
+  font-size: 0.7rem;
+  color: var(--mau-text-muted);
+  margin-top: 5px;
+}
+
+/* ── Sidebar Footer Butonları ── */
+.dash-footer-btn {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  padding: 8px 12px;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+  margin-bottom: 2px;
+}
+
+.dash-footer-btn:hover {
+  background: var(--mau-sidebar-hover);
+}
+
+/* ── Toast Bildirimleri ── */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast-item {
+  background: var(--mau-card);
+  border-left: 4px solid var(--mau-magenta);
+  padding: 14px 18px;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  min-width: 280px;
+  max-width: 380px;
+  animation: slideInRight 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  pointer-events: all;
+}
+
+.toast-item--clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.toast-item--clickable:hover {
+  transform: translateX(-3px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
+}
+
+.toast-label {
+  font-weight: 700;
+  font-size: 0.7rem;
+  color: var(--mau-magenta);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.toast-message {
+  font-size: 0.9rem;
+  color: var(--mau-text);
+  line-height: 1.45;
+}
+
+/* ── Session Timeout Warning ── */
+.session-warning-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.session-warning-modal {
+  background: var(--mau-card);
+  border: 1px solid var(--mau-border-subtle);
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  color: var(--mau-text);
+  max-width: 400px;
+  width: 90%;
+}
+
+.session-warning-countdown {
+  font-size: 4rem;
+  font-weight: 700;
+  color: var(--mau-magenta);
+  margin: 1rem 0;
 }

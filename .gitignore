@@ -3,3 +3,9 @@ backend/*.db
 frontend/node_modules/
 frontend/dist/
 .DS_Store
+*.db
+backend/build_local/
+backend/build_pg/
+login.json
+backend/insert_tickets.sh
+test_backend.sh

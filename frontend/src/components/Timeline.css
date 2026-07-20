@@ -1,0 +1,103 @@
+.timeline-container {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 0;
+}
+
+.timeline-item {
+  position: relative;
+  padding-left: 2.5rem;
+  padding-bottom: 1.5rem;
+  opacity: 0;
+  animation: slideInRight 0.5s ease forwards;
+}
+
+.timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.timeline-item:last-child .timeline-line {
+  display: none;
+}
+
+.timeline-line {
+  position: absolute;
+  left: 0.5rem;
+  top: 1.5rem;
+  bottom: -0.5rem;
+  width: 2px;
+  background-color: var(--mau-border);
+  transform: translateX(-50%);
+}
+
+.timeline-dot {
+  position: absolute;
+  left: 0.5rem;
+  top: 0.25rem;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  border: 2px solid var(--mau-card-bg);
+  box-shadow: 0 0 0 2px var(--mau-border);
+  background-color: var(--mau-text-muted);
+  z-index: 1;
+}
+
+.tl-dot-green { background-color: var(--brand-success); box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.3); }
+.tl-dot-blue { background-color: var(--brand-primary); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3); }
+.tl-dot-magenta { background-color: #d946ef; box-shadow: 0 0 0 2px rgba(217, 70, 239, 0.3); }
+.tl-dot-orange { background-color: var(--brand-warning); box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3); }
+.tl-dot-default { background-color: var(--mau-text-muted); }
+
+.timeline-content {
+  background: var(--mau-page-bg);
+  border: 1px solid var(--mau-border);
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.timeline-content:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  border-color: var(--brand-primary);
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.timeline-time {
+  color: var(--mau-text-muted);
+}
+
+.timeline-user {
+  font-weight: 600;
+  color: var(--brand-primary);
+  background: rgba(var(--brand-primary-rgb), 0.1);
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+}
+
+.timeline-action {
+  color: var(--mau-text);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

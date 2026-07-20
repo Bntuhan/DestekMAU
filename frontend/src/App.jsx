@@ -9,6 +9,11 @@ import NewTicketPage from './pages/NewTicketPage.jsx'
 import AssignPage from './pages/AssignPage.jsx'
 import NewUserPage from './pages/NewUserPage.jsx'
 import TicketDetailPage from './pages/TicketDetailPage.jsx'
+import KanbanPage from './pages/KanbanPage.jsx'
+import ProfilePage from './pages/ProfilePage.jsx'
+import FaqPage from './pages/FaqPage.jsx'
+import AnnouncementsPage from './pages/AnnouncementsPage.jsx'
+import AuditLogPage from './pages/AuditLogPage.jsx'
 
 function PrivateRoute({ children }) {
   const { user, ready } = useAuth()
@@ -73,6 +78,25 @@ export default function App() {
           element={
             <ManagerRoute>
               <AssignPage />
+            </ManagerRoute>
+          }
+        />
+        <Route path="kanban" element={<KanbanPage />} />
+        <Route path="profil" element={<ProfilePage />} />
+        <Route path="faq" element={<FaqPage />} />
+        <Route
+          path="duyurular"
+          element={
+            <ManagerRoute>
+              <AnnouncementsPage />
+            </ManagerRoute>
+          }
+        />
+        <Route
+          path="audit-log"
+          element={
+            <ManagerRoute>
+              <AuditLogPage />
             </ManagerRoute>
           }
         />

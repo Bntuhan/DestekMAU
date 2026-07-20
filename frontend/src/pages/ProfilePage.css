@@ -1,0 +1,99 @@
+.profile-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.profile-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--mau-gradient-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 700;
+  box-shadow: var(--mau-shadow-card);
+}
+
+.profile-info h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.75rem;
+  color: var(--mau-text);
+  font-weight: 700;
+}
+
+.profile-email {
+  color: var(--mau-text-muted);
+  font-size: 1rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.profile-role {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(var(--mau-magenta-rgb), 0.1);
+  color: var(--mau-magenta);
+}
+
+.profile-section {
+  margin-bottom: 2rem;
+}
+
+.profile-section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--mau-text);
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--mau-border-subtle);
+  padding-bottom: 0.75rem;
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 400px;
+}
+
+.pw-strength-bar {
+  height: 6px;
+  background: var(--mau-border-subtle);
+  border-radius: 3px;
+  margin-top: 0.5rem;
+  overflow: hidden;
+}
+
+.pw-strength-fill {
+  height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+  width: 0%;
+}
+
+.pw-strength-fill.weak { width: 33%; background: var(--brand-danger); }
+.pw-strength-fill.medium { width: 66%; background: var(--brand-warning); }
+.pw-strength-fill.strong { width: 100%; background: var(--brand-success); }
+
+.pw-strength-text {
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  display: block;
+  text-align: right;
+  font-weight: 600;
+}
+
+.pw-strength-text.weak { color: var(--brand-danger); }
+.pw-strength-text.medium { color: var(--brand-warning); }
+.pw-strength-text.strong { color: var(--brand-success); }

@@ -1,56 +1,73 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
 
 :root {
-  /* Birincil aksan: Blackboard LMS stilinde koyu pembe/mürdüm */
-  --mau-magenta: #c50e82; /* Image 1 active color */
+  /* ── Birincil Aksan ── */
+  --mau-magenta: #c50e82;
   --mau-magenta-mid: #a00b6a;
   --mau-magenta-light: #e032a2;
   --mau-magenta-rgb: 197, 14, 130;
   --mau-gradient-primary: var(--mau-magenta);
   --mau-magenta-glow: rgba(var(--mau-magenta-rgb), 0.2);
 
-  --mau-sidebar: #1d1d1f; /* Image 1 dark charcoal sidebar */
+  /* ── Sidebar ── */
+  --mau-sidebar: #1d1d1f;
   --mau-sidebar-elevated: #26262b;
-  --mau-sidebar-border: rgba(255, 255, 255, 0.04);
+  --mau-sidebar-border: rgba(255, 255, 255, 0.06);
   --mau-sidebar-hover: rgba(255, 255, 255, 0.08);
 
-  --mau-page-bg: #f4f5f6; /* Image 2 white/grey layout */
+  /* ── Sayfa Yüzeyleri ── */
+  --mau-page-bg: #f2f3f5;
   --mau-page-surface: #ffffff;
   --mau-card: #ffffff;
-  --mau-text: #1d2125;
-  --mau-text-secondary: #444d56;
+  --mau-text: #1a1d20;
+  --mau-text-secondary: #3d4450;
   --mau-text-muted: #6a737d;
-  --mau-border: #d1d5da;
-  --mau-border-subtle: #e1e4e8;
+  --mau-border: #d0d4da;
+  --mau-border-subtle: #e4e7eb;
 
-  --mau-radius-sm: 0px; /* Sharp corners for active sidebar */
-  --mau-radius-md: 4px; /* Minimal curvature */
-  --mau-radius-lg: 6px;
+  /* ── Köşe Yuvarlama ── */
+  --mau-radius-sm: 2px;
+  --mau-radius-md: 6px;
+  --mau-radius-lg: 10px;
+  --mau-radius-xl: 16px;
 
-  --mau-shadow-soft: 0 1px 2px rgba(27, 31, 35, 0.04); /* Flat design */
-  --mau-shadow-card: 0 1px 2px rgba(27, 31, 35, 0.04); /* Almost flat */
+  /* ── Gölgeler ── */
+  --mau-shadow-soft: 0 1px 3px rgba(27, 31, 35, 0.06), 0 1px 2px rgba(27, 31, 35, 0.04);
+  --mau-shadow-card: 0 2px 8px rgba(27, 31, 35, 0.07);
+  --mau-shadow-lifted: 0 8px 24px rgba(27, 31, 35, 0.12);
   --mau-shadow-brand: none;
-  --mau-shadow-brand-hover: 0 2px 6px rgba(var(--mau-magenta-rgb), 0.2);
-  --mau-focus-ring: 0 0 0 2px rgba(var(--mau-magenta-rgb), 0.25);
+  --mau-shadow-brand-hover: 0 4px 14px rgba(var(--mau-magenta-rgb), 0.32);
+  --mau-focus-ring: 0 0 0 3px rgba(var(--mau-magenta-rgb), 0.22);
 
   --mau-panel-overlay: rgba(0, 0, 0, 0.5);
-
-  /* New LMS specific variables */
   --mau-lms-serif: 'Georgia', 'Times New Roman', serif;
+
+  /* ── Durum Renkleri ── */
+  --brand-primary: var(--mau-magenta);
+  --brand-danger: #dc2626;
+  --brand-warning: #d97706;
+  --brand-info: #0ea5e9;
+  --brand-blue: #3b82f6;
+  --brand-success: #059669;
 }
 
+/* ── Karanlık Mod ── */
 [data-theme='dark'] {
-  --mau-page-bg: #111113;
-  --mau-page-surface: #1e1e21;
-  --mau-card: #1e1e21;
-  --mau-text: #e1e3e5;
-  --mau-text-secondary: #a1a6b0;
-  --mau-text-muted: #7b818d;
-  --mau-border: #313338;
-  --mau-border-subtle: #242528;
-  --mau-sidebar: #09090a;
+  --mau-page-bg: #0f0f11;
+  --mau-page-surface: #18181b;
+  --mau-card: #1c1c1f;
+  --mau-text: #e8eaed;
+  --mau-text-secondary: #a8adb8;
+  --mau-text-muted: #6e7480;
+  --mau-border: #2a2d33;
+  --mau-border-subtle: #222428;
+  --mau-sidebar: #09090b;
+  --mau-sidebar-border: rgba(255, 255, 255, 0.05);
+  --mau-shadow-card: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --mau-shadow-lifted: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
+/* ── Reset & Base ── */
 *,
 *::before,
 *::after {
@@ -72,6 +89,7 @@ body {
   background: var(--mau-page-bg);
 }
 
+/* ── Yükleme Ekranı ── */
 .app-boot {
   min-height: 100vh;
   display: flex;
@@ -86,7 +104,187 @@ body {
   font-size: 0.9375rem;
 }
 
+/* ── Animasyonlar ── */
 @keyframes slideInRight {
   from { opacity: 0; transform: translateX(100%); }
-  to { opacity: 1; transform: translateX(0); }
+  to   { opacity: 1; transform: translateX(0); }
 }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(var(--mau-magenta-rgb), 0); }
+  50%       { box-shadow: 0 0 0 6px rgba(var(--mau-magenta-rgb), 0.12); }
+}
+
+/* ── Utility: fade-in ── */
+.fade-in {
+  animation: fadeInUp 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ── mau-card ── */
+.mau-card {
+  background: var(--mau-card);
+  border: 1px solid var(--mau-border-subtle);
+  border-radius: var(--mau-radius-lg);
+  box-shadow: var(--mau-shadow-card);
+}
+
+.mau-card__header {
+  padding: 1.5rem 1.75rem 0;
+  position: relative;
+}
+
+.mau-card__accent {
+  height: 3px;
+  background: linear-gradient(90deg, var(--mau-magenta) 0%, var(--mau-magenta-light) 100%);
+  border-radius: 1.5px;
+  margin-bottom: 1.5rem;
+  margin-top: 1rem;
+}
+
+.mau-card__title {
+  margin: 0 0 0.25rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--mau-text);
+  letter-spacing: -0.01em;
+}
+
+.mau-card__subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--mau-text-muted);
+  line-height: 1.5;
+}
+
+.mau-card__body {
+  padding: 0 1.75rem 1.75rem;
+}
+
+/* ── mau-btn ── */
+.mau-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.1rem;
+  border: 1px solid transparent;
+  border-radius: var(--mau-radius-md);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.mau-btn:active { transform: scale(0.97); }
+
+.mau-btn--primary {
+  background: var(--mau-magenta);
+  color: #fff;
+}
+.mau-btn--primary:hover {
+  background: var(--mau-magenta-mid);
+  box-shadow: var(--mau-shadow-brand-hover);
+}
+
+.mau-btn--ghost {
+  background: transparent;
+  color: var(--mau-text-secondary);
+  border-color: var(--mau-border);
+}
+.mau-btn--ghost:hover {
+  background: var(--mau-page-bg);
+  border-color: var(--mau-border);
+  color: var(--mau-text);
+}
+
+.mau-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── mau-toolbar ── */
+.mau-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* ── mau-page ── */
+.mau-page {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.mau-page--narrow {
+  max-width: 700px;
+}
+
+/* ── mau-field ── */
+.mau-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--mau-text-secondary);
+  letter-spacing: 0.01em;
+}
+
+.mau-field span {
+  color: var(--mau-text-secondary);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.mau-input,
+.mau-field input,
+.mau-field select,
+.mau-field textarea {
+  width: 100%;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--mau-border);
+  border-radius: var(--mau-radius-md);
+  background: var(--mau-card);
+  color: var(--mau-text);
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mau-input:focus,
+.mau-field input:focus,
+.mau-field select:focus,
+.mau-field textarea:focus {
+  outline: none;
+  border-color: var(--mau-magenta);
+  box-shadow: var(--mau-focus-ring);
+}
+
+/* ── Erişilebilirlik ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+

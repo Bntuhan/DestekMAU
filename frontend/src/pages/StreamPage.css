@@ -30,6 +30,7 @@
   letter-spacing: -0.01em;
   color: #ffffff;
   line-height: 1.1;
+  animation: fadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .stream-hero-lead {
@@ -200,8 +201,9 @@
 }
 
 .stream-body:hover {
-  background: #fdfdfd;
-  box-shadow: var(--mau-shadow-card);
+  background: var(--mau-card);
+  box-shadow: var(--mau-shadow-lifted);
+  transform: translateY(-2px);
 }
 
 .stream-item-head {
@@ -255,4 +257,179 @@
     margin-left: 0;
     width: 100%;
   }
+}
+
+/* ── Arama ── */
+.stream-search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+  max-width: 380px;
+}
+
+.stream-search-icon {
+  position: absolute;
+  left: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1rem;
+  height: 1rem;
+  color: var(--mau-text-muted);
+  pointer-events: none;
+}
+
+.stream-search {
+  width: 100%;
+  padding: 0.5rem 2.2rem 0.5rem 2.2rem;
+  border-radius: var(--mau-radius-sm);
+  border: 1px solid var(--mau-border);
+  background: var(--mau-card);
+  color: var(--mau-text);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stream-search:focus {
+  outline: none;
+  border-color: var(--mau-magenta);
+  box-shadow: var(--mau-focus-ring);
+}
+
+.stream-search::placeholder {
+  color: var(--mau-text-muted);
+  font-weight: 400;
+}
+
+.stream-search-clear {
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--mau-text-muted);
+  font-size: 0.75rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: color 0.15s, background 0.15s;
+}
+
+.stream-search-clear:hover {
+  color: var(--mau-text);
+  background: var(--mau-page-bg);
+}
+
+/* ── Sonuç Sayısı ── */
+.stream-results-info {
+  margin-bottom: 0.85rem;
+  font-size: 0.82rem;
+  color: var(--mau-text-muted);
+}
+
+.stream-results-info strong {
+  color: var(--mau-text);
+}
+
+/* ── Badge Güncellemeleri ── */
+.stream-badges {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.stream-badge--status.stream-badge--open          { background: rgba(59,130,246,0.12);  color: #3b82f6; }
+.stream-badge--status.stream-badge--assigned      { background: rgba(245,158,11,0.12); color: #d97706; }
+.stream-badge--status.stream-badge--closed        { background: rgba(16,185,129,0.12); color: #059669; }
+.stream-badge--status.stream-badge--pending_close { background: rgba(249,115,22,0.12); color: #ea580c; }
+
+.stream-badge--priority { border-radius: 6px; }
+.stream-badge--prio-high   { background: rgba(220,38,38,0.10);  color: #dc2626; }
+.stream-badge--prio-normal { background: rgba(245,158,11,0.10); color: #d97706; }
+.stream-badge--prio-low    { background: rgba(16,185,129,0.10); color: #059669; }
+
+/* ── Pagination ── */
+.stream-pagination {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.stream-page-btn {
+  min-width: 2.25rem;
+  height: 2.25rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--mau-border);
+  border-radius: var(--mau-radius-md);
+  background: var(--mau-card);
+  color: var(--mau-text-secondary);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.stream-page-btn:hover:not(:disabled) {
+  background: var(--mau-page-bg);
+  border-color: var(--mau-magenta);
+  color: var(--mau-magenta);
+}
+
+.stream-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.stream-page-btn--active {
+  background: var(--mau-magenta);
+  border-color: var(--mau-magenta);
+  color: #fff;
+  font-weight: 700;
+}
+
+.stream-page-btn--active:hover:not(:disabled) {
+  background: var(--mau-magenta-mid);
+  border-color: var(--mau-magenta-mid);
+  color: #fff;
+}
+
+.stream-page-ellipsis {
+  color: var(--mau-text-muted);
+  padding: 0 0.2rem;
+  font-size: 0.875rem;
+  line-height: 2.25rem;
+}
+
+.stream-page-info {
+  margin-left: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--mau-text-muted);
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .stream-search-wrap {
+    max-width: 100%;
+    min-width: 0;
+    width: 100%;
+  }
+  .stream-toolbar {
+    flex-wrap: wrap;
+  }
+}
+
+/* ── Yaş Uyarıları ── */
+.stream-item--age-critical {
+  border-left: 4px solid var(--brand-danger);
+}
+
+.stream-item--age-warn {
+  border-left: 4px solid var(--brand-warning);
 }

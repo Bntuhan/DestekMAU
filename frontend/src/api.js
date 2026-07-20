@@ -147,3 +147,43 @@ export function fetchAnalytics() {
 export function completeTicketPart(id) {
   return api(`/api/tickets/${id}/complete_part`, { method: 'POST' })
 }
+
+export function fetchComments(id) {
+  return api(`/api/tickets/${id}/comments`)
+}
+
+export function addComment(id, body, isInternal = false) {
+  return api(`/api/tickets/${id}/comments`, {
+    method: 'POST',
+    body: JSON.stringify({ body, is_internal: isInternal }),
+  })
+}
+
+// ── Duyurular ──
+export function fetchAnnouncements() {
+  return api('/api/announcements')
+}
+
+export function createAnnouncement(title, body) {
+  return api('/api/announcements', {
+    method: 'POST',
+    body: JSON.stringify({ title, body }),
+  })
+}
+
+export function patchAnnouncement(id, payload) {
+  return api(`/api/announcements/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  })
+}
+
+// ── Audit Log ──
+export function fetchAuditLog() {
+  return api('/api/audit-log')
+}
+
+// ── Trend Analizi ──
+export function fetchAnalyticsTrend() {
+  return api('/api/analytics/trend')
+}

@@ -3,6 +3,10 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth.jsx'
 import * as api from '../api.js'
+import Modal from '../components/Modal.jsx'
+import CannedResponses from '../components/CannedResponses.jsx'
+import Lightbox from '../components/Lightbox.jsx'
+import Timeline from '../components/Timeline.jsx'
 import './TicketDetailPage.css'
 
 export default function TicketDetailPage() {
@@ -27,6 +31,33 @@ export default function TicketDetailPage() {
   const [viewers, setViewers] = useState([])
   const assigneesSaveTimer = useRef(null)
   const assigneesPending = useRef(null)
+
+  // Yorum sistemi
+  const [comments, setComments] = useState([])
+  const [commentText, setCommentText] = useState('')
+  const [isInternal, setIsInternal] = useState(false)
+  const [commentLoading, setCommentLoading] = useState(false)
+  const commentsEndRef = useRef(null)
+
+  // Modal state
+  const [modal, setModal] = useState({ open: false, type: 'alert', title: '', message: '', onConfirm: null, onCancel: null, confirmLabel: '' })
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+
+  function showAlert(title, message, onConfirm) {
+    setModal({ open: true, type: 'alert', title, message, onConfirm: () => { setModal(m => ({ ...m, open: false })); onConfirm?.() }, onCancel: null, confirmLabel: 'Tamam' })
+  }
+
+  function showConfirm(title, message, onConfirm, type = 'confirm', confirmLabel = '') {
+    setModal({
+      open: true,
+      type,
+      title,
+      message,
+      confirmLabel,
+      onConfirm: () => { setModal(m => ({ ...m, open: false })); onConfirm() },
+      onCancel: () => setModal(m => ({ ...m, open: false })),
+    })
+  }
 
   function normalizeAssigneeIds(list) {
     return [...new Set((list || []).map((id) => Number(id)).filter((id) => !Number.isNaN(id)))]
@@ -102,6 +133,10 @@ export default function TicketDetailPage() {
         
         const hData = await api.fetchTicketHistory(id)
         setHistory(hData)
+
+        // Yorumları yükle
+        const cData = await api.fetchComments(id)
+        if (Array.isArray(cData)) setComments(cData)
         
         // Fetch staff if manager
         if (isManager) {
@@ -137,9 +172,9 @@ export default function TicketDetailPage() {
       if (err.data?.error === 'assignees_incomplete') {
         const c = err.data.completed ?? '?'
         const t = err.data.total ?? '?'
-        alert(`Tüm atanan personel tamamlamadan talep kapatılamaz (${c}/${t}).`)
+        showAlert('İşlem Tamamlanamadı', `Tüm atanan personel tamamlamadan talep kapatılamaz (${c}/${t}).`)
       } else {
-        alert('Güncelleme başarısız: ' + err.message)
+        showAlert('Güncelleme Başarısız', err.message)
       }
       setStatusVal(ticket?.status || 'open')
     } finally {
@@ -173,12 +208,12 @@ export default function TicketDetailPage() {
       const list = tData.assignees || []
       const allDone = list.length > 0 && list.every((a) => a.is_completed)
       if (tData.status === 'pending_close' && allDone) {
-        alert('Göreviniz tamamlandı. Tüm personel bitirdi — talep yönetici onayına gönderildi.')
+        showAlert('Görev Tamamlandı', 'Göreviniz tamamlandı. Tüm personel bitirdi — talep yönetici onayına gönderildi.')
       } else {
-        alert('Görev bölümünüz tamamlandı olarak işaretlendi.')
+        showAlert('Tamamlandı', 'Görev bölümünüz tamamlandı olarak işaretlendi.')
       }
     } catch(err) {
-      alert('İşlem başarısız: ' + err.message)
+      showAlert('Hata', 'İşlem başarısız: ' + err.message)
     } finally {
       setActionLoading(false)
     }
@@ -190,7 +225,7 @@ export default function TicketDetailPage() {
     const total = list.length
     const completed = list.filter((a) => a.is_completed).length
     if (val === 'closed' && isManager && total > 0 && completed < total) {
-      alert(`Tüm atanan personel tamamlamadan talep kapatılamaz (${completed}/${total}).`)
+      showAlert('Kapatılamaz', `Tüm atanan personel tamamlamadan talep kapatılamaz (${completed}/${total}).`)
       setStatusVal(ticket.status)
       return
     }
@@ -208,7 +243,7 @@ export default function TicketDetailPage() {
       setHistory(hData)
       setHistoryActionVal('')
     } catch (err) {
-      alert('Aşama eklenemedi: ' + err.message)
+      showAlert('Hata', 'Aşama eklenemedi: ' + err.message)
     } finally {
       setActionLoading(false)
     }
@@ -225,40 +260,54 @@ export default function TicketDetailPage() {
       
       const hData = await api.fetchTicketHistory(id)
       setHistory(hData)
-      alert("Çözüm onay talebi yöneticilere iletildi.")
+      showAlert('İstek Gönderildi', 'Çözüm onay talebi yöneticilere iletildi.')
     } catch(err) {
-      alert("İşlem başarısız: " + err.message)
+      showAlert('Hata', 'İşlem başarısız: ' + err.message)
     } finally {
       setActionLoading(false)
     }
   }
 
-  async function handleBackupRequest() {
-    if (!window.confirm("Bu bilette diğer meslektaşlarınızdan yardım çağrısı başlatmak istediğinize emin misiniz?")) return;
-    setActionLoading(true)
-    try {
-      await api.requestTicketBackup(id)
-      alert("Yardım çağrınız tüm personele ve yöneticilere ulaştırıldı.")
-    } catch(err) {
-      alert("Çağrı başarısız: " + err.message)
-    } finally {
-      setActionLoading(false)
-    }
+  function handleBackupRequest() {
+    showConfirm(
+      'Yardım Çağır',
+      'Bu bilette diğer meslektaşlarınızdan yardım çağrısı başlatmak istediğinize emin misiniz?',
+      async () => {
+        setActionLoading(true)
+        try {
+          await api.requestTicketBackup(id)
+          showAlert('Çağrı Gönderildi', 'Yardım çağrınız tüm personele ve yöneticilere ulaştırıldı.')
+        } catch(err) {
+          showAlert('Hata', 'Çağrı başarısız: ' + err.message)
+        } finally {
+          setActionLoading(false)
+        }
+      },
+      'danger',
+      'Evet, çağır'
+    )
   }
 
-  async function handleRate(stars) {
-    if (!window.confirm(`Hizmetimize ${stars} yıldız vermek istiyor musunuz?`)) return;
-    setActionLoading(true)
-    try {
-      await api.patchTicket(id, { rating: stars })
-      const tData = await api.fetchTicket(id)
-      setTicket(tData)
-      alert("Geri bildiriminiz için teşekkürler!")
-    } catch(err) {
-      alert("Puanlama başarısız: " + err.message)
-    } finally {
-      setActionLoading(false)
-    }
+  function handleRate(stars) {
+    showConfirm(
+      'Hizmet Değerlendirmesi',
+      `Hizmetimize ${stars} yıldız vermek istiyor musunuz?`,
+      async () => {
+        setActionLoading(true)
+        try {
+          await api.patchTicket(id, { rating: stars })
+          const tData = await api.fetchTicket(id)
+          setTicket(tData)
+          showAlert('Teşekkürler!', 'Geri bildiriminiz kaydedildi.')
+        } catch(err) {
+          showAlert('Hata', 'Puanlama başarısız: ' + err.message)
+        } finally {
+          setActionLoading(false)
+        }
+      },
+      'confirm',
+      `${stars} Yıldız Ver`
+    )
   }
 
   function goBack() {
@@ -279,9 +328,30 @@ export default function TicketDetailPage() {
 
   return (
     <div className="td-page fade-in">
-      <button className="td-back-btn" onClick={goBack}>
-        ← Geri Dön
-      </button>
+      {/* Modal bileşeni */}
+      <Modal
+        open={modal.open}
+        type={modal.type}
+        title={modal.title}
+        message={modal.message}
+        confirmLabel={modal.confirmLabel}
+        onConfirm={modal.onConfirm}
+        onCancel={modal.onCancel}
+      />
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <button className="td-back-btn" style={{ marginBottom: 0 }} onClick={goBack}>
+          ← Geri Dön
+        </button>
+        <button className="mau-btn mau-btn--ghost td-print-btn" onClick={() => window.print()}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '6px'}}>
+            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <rect x="6" y="14" width="12" height="8"></rect>
+          </svg>
+          Yazdır / PDF
+        </button>
+      </div>
 
       <div className="td-grid">
         <div className="td-main">
@@ -315,31 +385,103 @@ export default function TicketDetailPage() {
               {ticket.photo_path && (
                 <div className="td-photo-box">
                   <h3>Eklenen Fotoğraf</h3>
-                  <a href={ticket.photo_path.startsWith('http') ? ticket.photo_path : 'http://127.0.0.1:8080' + ticket.photo_path} target="_blank" rel="noopener noreferrer">
+                  <div onClick={() => setLightboxOpen(true)} style={{cursor: 'zoom-in', display: 'inline-block'}}>
                     <img 
-                      src={ticket.photo_path.startsWith('http') ? ticket.photo_path : 'http://127.0.0.1:8080' + ticket.photo_path} 
+                      src={ticket.photo_path.startsWith('http') ? ticket.photo_path : ticket.photo_path} 
                       alt="Talep Fotoğrafı" 
-                      style={{maxWidth: '100%', borderRadius: '8px', border: '1px solid #eee', marginTop: '10px', cursor: 'zoom-in'}} 
+                      style={{maxWidth: '100%', borderRadius: '8px', border: '1px solid #eee', marginTop: '10px'}} 
                     />
-                  </a>
+                  </div>
+                  <Lightbox 
+                    open={lightboxOpen} 
+                    src={ticket.photo_path.startsWith('http') ? ticket.photo_path : ticket.photo_path} 
+                    onClose={() => setLightboxOpen(false)} 
+                  />
                 </div>
               )}
 
               <div className="td-history-box" style={{marginTop: '2rem'}}>
                 <h3>Süreç Takibi</h3>
-                <ul className="td-timeline" style={{listStyle: 'none', padding: 0, marginTop: '1rem'}}>
-                  {history.map(h => (
-                    <li key={h.id} style={{padding: '0.8rem', borderLeft: '3px solid var(--brand-blue)', marginBottom: '0.5rem', background: 'var(--mau-page-bg)', borderRadius: '0 4px 4px 0'}}>
-                      <div style={{fontSize: '0.85rem', color: 'var(--mau-text-muted)', marginBottom: '0.2rem'}}>
-                        {new Date(h.created_at).toLocaleString('tr-TR')} - <strong>{h.user_name}</strong>
-                      </div>
-                      <div style={{fontWeight: '500', color: 'var(--mau-text)'}}>
-                        {h.action}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                <Timeline items={history} />
               </div>
+            </div>
+
+            {/* ── Yorum Sistemi ── */}
+            <div className="td-comments-box">
+              <h3 className="td-comments-title">Mesajlar & Yorumlar</h3>
+              <div className="td-comments-list">
+                {comments.length === 0 ? (
+                  <p className="td-comments-empty">Henüz yorum yok. İlk mesajı sen gönder!</p>
+                ) : (
+                  comments.map(c => {
+                    const isInternal = c.is_internal === 1
+                    return (
+                      <div key={c.id} className={`td-comment${c.user_id === user?.id ? ' td-comment--own' : ''}${isInternal ? ' td-comment--internal' : ''}`}>
+                        <div className="td-comment__meta">
+                          <span className="td-comment__author">
+                            {c.display_name} {isInternal && <span style={{fontSize: '0.75rem', background: '#f59e0b', color: '#fff', padding: '2px 6px', borderRadius: '4px', marginLeft: '6px'}}>Dahili Not</span>}
+                          </span>
+                          <span className="td-comment__date">{new Date(c.created_at).toLocaleString('tr-TR')}</span>
+                        </div>
+                        <div className="td-comment__body">{c.body}</div>
+                      </div>
+                    )
+                  })
+                )}
+                <div ref={commentsEndRef} />
+              </div>
+              <form className="td-comment-form" onSubmit={async (e) => {
+                e.preventDefault()
+                if (!commentText.trim() || commentLoading) return
+                setCommentLoading(true)
+                try {
+                  await api.addComment(id, commentText.trim(), isInternal)
+                  const cData = await api.fetchComments(id)
+                  if (Array.isArray(cData)) {
+                    setComments(cData)
+                    setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+                  }
+                  setCommentText('')
+                  setIsInternal(false)
+                } catch(err) {
+                  showAlert('Hata', 'Yorum gönderilemedi: ' + err.message)
+                } finally {
+                  setCommentLoading(false)
+                }
+              }}>
+                {(isSupport || isManager) && (
+                  <CannedResponses onSelect={(text) => setCommentText(prev => prev ? prev + '\n' + text : text)} />
+                )}
+                <textarea
+                  className="td-comment-input"
+                  placeholder="Bir mesaj yazın…"
+                  value={commentText}
+                  onChange={e => setCommentText(e.target.value)}
+                  rows={3}
+                  maxLength={1000}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) e.currentTarget.form.requestSubmit()
+                  }}
+                />
+                <div className="td-comment-form-footer" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <span className="td-comment-char-count">{commentText.length}/1000 · Ctrl+Enter ile gönder</span>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+                    {(isSupport || isManager) && (
+                      <label style={{display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--mau-text-muted)', cursor: 'pointer'}}>
+                        <input type="checkbox" checked={isInternal} onChange={e => setIsInternal(e.target.checked)} />
+                        Dahili Not
+                      </label>
+                    )}
+                    <button
+                      type="submit"
+                      className="td-action-btn td-action-btn--primary td-action-btn--compact"
+                      disabled={!commentText.trim() || commentLoading}
+                    >
+                      {commentLoading ? 'Gönderiliyor…' : 'Gönder'}
+                    </button>
+                  </div>
+                </div>
+              </form>
             </div>
           </div>
         </div>
@@ -351,6 +493,25 @@ export default function TicketDetailPage() {
               <li>
                 <strong>ID:</strong> #{ticket.id}
               </li>
+              {(() => {
+                if (ticket.status === 'closed' || ticket.status === 'pending_close') return null
+                const hours = ticket.priority === 'high' ? 24 : ticket.priority === 'normal' ? 48 : 72
+                const target = new Date(new Date(ticket.created_at).getTime() + hours * 60 * 60 * 1000)
+                const isOverdue = new Date() > target
+                return (
+                  <li>
+                    <strong>SLA Hedefi:</strong>{' '}
+                    <span style={{ color: isOverdue ? '#ef4444' : 'inherit', fontWeight: isOverdue ? 'bold' : 'normal' }}>
+                      {target.toLocaleString('tr-TR')} {isOverdue && ' (Aşıldı)'}
+                    </span>
+                  </li>
+                )
+              })()}
+              {ticket.category && (
+                <li>
+                  <strong>Kategori:</strong> {ticket.category}
+                </li>
+              )}
               <li>
                 <strong>Oluşturan:</strong> {ticket.owner_name}
               </li>

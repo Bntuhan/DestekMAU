@@ -91,3 +91,78 @@
   margin-top: 1rem;
   padding: 1rem 0;
 }
+
+.file-drop-zone {
+  border: 2px dashed var(--mau-border);
+  border-radius: var(--mau-radius-md);
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--mau-surface);
+}
+
+.file-drop-zone:hover {
+  border-color: var(--mau-magenta);
+  background: rgba(189, 31, 89, 0.02);
+}
+
+.file-drop-zone.dragging {
+  border-color: var(--mau-magenta);
+  background: rgba(189, 31, 89, 0.05);
+}
+
+.file-drop-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--mau-text-secondary);
+}
+
+.file-drop-message p {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.file-drop-message small {
+  font-size: 0.8rem;
+  color: var(--mau-text-muted);
+}
+
+.file-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.file-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  background: var(--mau-surface);
+  border: 1px solid var(--mau-border-subtle);
+  border-radius: var(--mau-radius-sm);
+  font-size: 0.85rem;
+  color: var(--mau-text);
+}
+
+.file-list-item button {
+  background: none;
+  border: none;
+  color: var(--mau-text-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  transition: color 0.2s ease;
+}
+
+.file-list-item button:hover {
+  color: #c62828;
+}
