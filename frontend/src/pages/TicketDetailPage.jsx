@@ -384,17 +384,21 @@ export default function TicketDetailPage() {
               
               {ticket.photo_path && (
                 <div className="td-photo-box">
-                  <h3>Eklenen Fotoğraf</h3>
-                  <div onClick={() => setLightboxOpen(true)} style={{cursor: 'zoom-in', display: 'inline-block'}}>
-                    <img 
-                      src={ticket.photo_path.startsWith('http') ? ticket.photo_path : ticket.photo_path} 
-                      alt="Talep Fotoğrafı" 
-                      style={{maxWidth: '100%', borderRadius: '8px', border: '1px solid #eee', marginTop: '10px'}} 
-                    />
+                  <h3>Eklenen Dosyalar</h3>
+                  <div style={{display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px'}}>
+                    {ticket.photo_path.split(',').map((url, idx) => (
+                      <div key={idx} onClick={() => setLightboxOpen(url.trim())} style={{cursor: 'zoom-in'}}>
+                        <img 
+                          src={url.trim()} 
+                          alt={`Talep Eki ${idx + 1}`} 
+                          style={{width: '120px', height: '120px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #eee'}} 
+                        />
+                      </div>
+                    ))}
                   </div>
                   <Lightbox 
-                    open={lightboxOpen} 
-                    src={ticket.photo_path.startsWith('http') ? ticket.photo_path : ticket.photo_path} 
+                    open={!!lightboxOpen} 
+                    src={typeof lightboxOpen === 'string' ? lightboxOpen : ''} 
                     onClose={() => setLightboxOpen(false)} 
                   />
                 </div>
