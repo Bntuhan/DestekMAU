@@ -1856,6 +1856,7 @@ int main(int argc, char **argv) {
     res.set_content(json{{"url", "/uploads/" + out_name}}.dump(), "application/json");
   });
 
+  fs::create_directories("./uploads");
   svr.set_mount_point("/uploads", "./uploads");
 
   // ── Yorum Sistemi ──────────────────────────────────────────────────────────
