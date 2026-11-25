@@ -5,6 +5,10 @@
       "destination": "https://destekmau.onrender.com/api/:path*"
     },
     {
+      "source": "/uploads/:path*",
+      "destination": "https://destekmau.onrender.com/uploads/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

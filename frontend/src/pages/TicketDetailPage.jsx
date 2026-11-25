@@ -131,12 +131,20 @@ export default function TicketDetailPage() {
         setAssignees(normalizeAssigneeIds(data.assignees?.map((a) => a.id)))
         setStatusVal(data.status || 'open')
         
-        const hData = await api.fetchTicketHistory(id)
-        setHistory(hData)
+        try {
+          const hData = await api.fetchTicketHistory(id)
+          if (Array.isArray(hData)) setHistory(hData)
+        } catch {
+          setHistory([])
+        }
 
         // Yorumları yükle
-        const cData = await api.fetchComments(id)
-        if (Array.isArray(cData)) setComments(cData)
+        try {
+          const cData = await api.fetchComments(id)
+          if (Array.isArray(cData)) setComments(cData)
+        } catch {
+          setComments([])
+        }
         
         // Fetch staff if manager
         if (isManager) {
@@ -386,15 +394,29 @@ export default function TicketDetailPage() {
                 <div className="td-photo-box">
                   <h3>Eklenen Dosyalar</h3>
                   <div style={{display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px'}}>
-                    {ticket.photo_path.split(',').map((url, idx) => (
-                      <div key={idx} onClick={() => setLightboxOpen(url.trim())} style={{cursor: 'zoom-in'}}>
-                        <img 
-                          src={url.trim()} 
-                          alt={`Talep Eki ${idx + 1}`} 
-                          style={{width: '120px', height: '120px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #eee'}} 
-                        />
-                      </div>
-                    ))}
+                    {ticket.photo_path.split(',').map(s => s.trim()).filter(Boolean).map((url, idx) => {
+                      const isImg = /\.(jpe?g|png|gif|webp)$/i.test(url.split('?')[0])
+                      return isImg ? (
+                        <div key={idx} onClick={() => setLightboxOpen(url)} style={{cursor: 'zoom-in'}}>
+                          <img 
+                            src={url} 
+                            alt={`Talep Eki ${idx + 1}`} 
+                            style={{width: '120px', height: '120px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #eee'}} 
+                          />
+                        </div>
+                      ) : (
+                        <a
+                          key={idx}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mau-btn mau-btn--ghost"
+                          style={{display: 'inline-flex', alignItems: 'center', gap: '6px'}}
+                        >
+                          📎 Dosya {idx + 1} ({url.split('/').pop()})
+                        </a>
+                      )
+                    })}
                   </div>
                   <Lightbox 
                     open={!!lightboxOpen} 

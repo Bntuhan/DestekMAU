@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import * as api from '../api.js'
+import Lightbox from '../components/Lightbox.jsx'
 import './NewTicketPage.css'
 
 export default function NewTicketPage() {
@@ -10,9 +11,19 @@ export default function NewTicketPage() {
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState('normal')
   const [files, setFiles] = useState([])
+  const [previews, setPreviews] = useState([])
+  const [previewSrc, setPreviewSrc] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+
+  useEffect(() => {
+    const urls = files.map(f => (f.type && f.type.startsWith('image/') ? URL.createObjectURL(f) : null))
+    setPreviews(urls)
+    return () => {
+      urls.forEach(u => { if (u) URL.revokeObjectURL(u) })
+    }
+  }, [files])
 
   function handleFiles(incomingFiles) {
     setError('')
@@ -186,15 +197,32 @@ export default function NewTicketPage() {
             {files.length > 0 && (
               <ul className="file-list">
                 {files.map((f, i) => (
-                  <li key={i} className="file-list-item">
-                    <span>{f.name} ({(f.size / (1024 * 1024)).toFixed(2)} MB)</span>
-                    <button type="button" onClick={() => setFiles(prev => prev.filter((_, idx) => idx !== i))}>
+                  <li key={i} className="file-list-item" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+                      {previews[i] && (
+                        <img
+                          src={previews[i]}
+                          alt={f.name}
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPreviewSrc(previews[i]); }}
+                          style={{ width: '44px', height: '44px', objectFit: 'cover', borderRadius: '6px', cursor: 'zoom-in', border: '1px solid var(--mau-border)', flexShrink: 0 }}
+                          title="Önizlemek için tıklayın"
+                        />
+                      )}
+                      <span
+                        onClick={(e) => { if (previews[i]) { e.preventDefault(); e.stopPropagation(); setPreviewSrc(previews[i]); } }}
+                        style={{ cursor: previews[i] ? 'zoom-in' : 'default', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                      >
+                        {f.name} ({(f.size / (1024 * 1024)).toFixed(2)} MB)
+                      </span>
+                    </div>
+                    <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setFiles(prev => prev.filter((_, idx) => idx !== i)); }}>
                       &times;
                     </button>
                   </li>
                 ))}
               </ul>
             )}
+            <Lightbox open={!!previewSrc} src={previewSrc} onClose={() => setPreviewSrc('')} />
           </label>
           {error ? <p className="new-ticket-error">{error}</p> : null}
           <div className="new-ticket-actions">

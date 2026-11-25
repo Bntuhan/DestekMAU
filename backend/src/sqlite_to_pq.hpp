@@ -14,6 +14,7 @@ typedef struct pg_conn sqlite3;
 #define SQLITE_DONE 101
 #define SQLITE_NULL 5
 #define SQLITE_TRANSIENT nullptr
+#define SQLITE_STATIC nullptr
 
 extern std::unordered_map<sqlite3*, int64_t> g_last_insert_rowid;
 
